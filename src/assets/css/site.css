@@ -412,138 +412,202 @@ footer{ background:var(--ink); color:var(--grey); padding:80px var(--pad) 32px; 
 }
 
 /* ============================================================================
-   ROVEIA-GRADE SURFACES AND SCROLL MOTION
-   Layout and motion language: a hero the page scrolls over, full-height cards
-   that stack under a sticky offset, generous rounded surfaces and large light
-   display type. Built on the Consultus palette and NuberNext, CSS only, so it
-   costs nothing in page weight across 6,500 pages.
+   IMAGE-LED LAYER
+   Photography carries the page. Full-bleed media, square corners, edge-to-edge
+   bands and image grids. Type sits on and beside the picture rather than
+   competing with it. Built on the Consultus palette and NuberNext.
    ========================================================================== */
 
 :root{
-  --radius:24px;        /* cards and content blocks */
-  --radius-lg:40px;     /* full-bleed feature blocks and the hero */
-  --radius-sm:16px;     /* small chips and inputs */
-  --stack-top:104px;    /* where stacking cards pin, below the nav */
+  --radius:0px;          /* media and blocks are square-cornered here */
+  --radius-sm:0px;
+  --radius-card:2px;     /* barely-there softening on content cards */
+  --stack-top:96px;
 }
 
-/* ---------- Type: larger, lighter, more air ---------- */
-.hero-display{ font-size:clamp(42px,7vw,96px); font-weight:300; line-height:1.06; letter-spacing:-.03em; max-width:15ch; }
-.hero-display.long{ font-size:clamp(32px,4.6vw,64px); font-weight:300; line-height:1.1; letter-spacing:-.024em; max-width:22ch; }
-.hero-display.xlong{ font-size:clamp(28px,3.5vw,48px); font-weight:300; line-height:1.16; letter-spacing:-.018em; max-width:28ch; }
-.sec-title{ font-size:clamp(34px,5vw,64px); font-weight:300; line-height:1.08; letter-spacing:-.028em; }
-.cta h2{ font-size:clamp(40px,6.4vw,92px); font-weight:300; line-height:1.05; letter-spacing:-.03em; }
-.thesis p{ font-size:clamp(26px,3.4vw,46px); font-weight:300; line-height:1.24; letter-spacing:-.02em; max-width:24ch; }
-.hero-sub{ font-size:19px; line-height:1.6; max-width:56ch; }
-.sec-sub{ font-size:18px; line-height:1.65; }
+/* ---------- Type: brand weight 400, tight tracking, larger ---------- */
+.hero-display{ font-size:clamp(40px,6.6vw,92px); font-weight:400; line-height:1.02; letter-spacing:-.03em; max-width:16ch; }
+.hero-display.long{ font-size:clamp(32px,4.4vw,62px); font-weight:400; line-height:1.06; letter-spacing:-.026em; max-width:22ch; }
+.hero-display.xlong{ font-size:clamp(27px,3.3vw,46px); font-weight:400; line-height:1.14; letter-spacing:-.02em; max-width:28ch; }
+.sec-title{ font-size:clamp(34px,4.8vw,62px); font-weight:400; line-height:1.04; letter-spacing:-.028em; }
+.cta h2{ font-size:clamp(40px,6.2vw,88px); font-weight:400; line-height:1.02; letter-spacing:-.03em; }
+.thesis p{ font-size:clamp(26px,3.2vw,44px); font-weight:400; line-height:1.22; letter-spacing:-.02em; max-width:24ch; }
 
-/* ---------- Surfaces: rounder, deeper padding ---------- */
-.card{ border-radius:var(--radius); padding:38px 36px; border-color:rgba(20,20,20,.07); }
-.card h3{ font-size:21px; font-weight:600; letter-spacing:-.01em; margin-bottom:12px; }
-.card p{ font-size:15.5px; line-height:1.65; }
-a.card:hover{ transform:translateY(-3px); box-shadow:0 20px 48px rgba(20,20,20,.09); }
-.rail a{ border-radius:var(--radius); padding:32px 30px; }
-.chip{ border-radius:100px; padding:11px 20px; }
-.tbl-wrap{ border-radius:var(--radius); }
-.hero{ border-radius:var(--radius-lg); }
-.hero-frame{ padding:10px; }
-.btn{ padding:17px 30px; font-size:15px; }
-.btn.sm{ padding:12px 22px; font-size:13.5px; }
-nav.pill{ padding:12px 12px 12px 26px; }
+/* ---------- Square-cornered surfaces ---------- */
+.hero, .hero-frame{ border-radius:0; }
+.hero-frame{ padding:0; }
+.card{ border-radius:var(--radius-card); padding:34px 32px; }
+.rail a{ border-radius:var(--radius-card); padding:30px 28px; }
+.tbl-wrap{ border-radius:var(--radius-card); }
+.sec{ padding:112px var(--pad); }
+.sec-inner{ padding:112px var(--pad); }
+.sec-head{ margin-bottom:68px; }
 
-/* Section rhythm: fewer, taller moments */
-.sec{ padding:132px var(--pad); }
-.sec-inner{ padding:132px var(--pad); }
-.sec.tight, .sec-inner.tight{ padding-top:84px; padding-bottom:84px; }
-.sec-head{ margin-bottom:76px; }
-.svc-block{ padding:64px 0; gap:72px; }
+/* ---------- IMAGE HERO: full-bleed photograph, text over a scrim ---------- */
+.hero.shot{ position:relative; min-height:min(92vh,880px); display:flex; align-items:flex-end;
+            padding:0; overflow:hidden; background:var(--ink); }
+.hero.shot .shot-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+/* Two scrims: one down the page so the copy block always has contrast, one from
+   the left because the copy is left-aligned and photographs are not. */
+.hero.shot::after{ content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:
+    linear-gradient(100deg, rgba(8,8,8,.72) 0%, rgba(8,8,8,.42) 42%, rgba(8,8,8,.08) 78%),
+    linear-gradient(180deg, rgba(8,8,8,.58) 0%, rgba(8,8,8,.24) 28%,
+                            rgba(8,8,8,.58) 62%, rgba(8,8,8,.9) 100%); }
+.hero.shot .hero-in{ position:relative; z-index:2; width:100%; max-width:var(--wrap);
+  margin:0 auto; padding:200px var(--pad) 76px; color:var(--paper); }
+.hero.shot h1, .hero.shot .hero-display{ color:var(--paper); }
+.hero.shot .hero-sub{ color:#E9E7E2; }
+.hero.shot h1.hero-kw{ color:#D8D5D0; }
+.hero.shot h1.hero-kw::before{ background:var(--yellow); }
+.hero.shot .sem{ color:var(--yellow); }
+.hero.shot .hero-fact{ border-color:rgba(255,255,255,.34); color:#E9E7E2; }
+.hero.shot .crumbs ol{ color:#C9C6C1; }
+.hero.shot .crumbs li + li::before{ color:rgba(255,255,255,.3); }
+.hero.shot .crumbs [aria-current]{ color:var(--paper); }
+.hero.shot .crumbs a:hover{ color:var(--yellow); }
+@supports (animation-timeline: view()){
+  .hero.shot .shot-img{ animation:shotDrift linear both;
+    animation-timeline:view(); animation-range:cover 0% cover 100%; will-change:transform; }
+  @keyframes shotDrift{ from{ transform:scale(1.02) translateY(0); }
+                        to{ transform:scale(1.14) translateY(-3%); } }
+}
 
-/* ---------- The page scrolls over the hero ---------- */
+/* ---------- FULL-BLEED IMAGE BAND ---------- */
+/* .band and .split carry the .sec class for section semantics, so they have to
+   opt out of its max-width and padding or they never reach the viewport edge. */
+.sec.band, .sec.split{ max-width:none; padding:0; margin:0; }
+.band{ position:relative; min-height:min(78vh,720px); display:flex; align-items:center;
+       overflow:hidden; background:var(--ink); }
+.band img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+.band::after{ content:""; position:absolute; inset:0; z-index:1;
+  background:linear-gradient(90deg, rgba(10,10,10,.86) 0%, rgba(10,10,10,.6) 46%, rgba(10,10,10,.2) 100%); }
+.band-in{ position:relative; z-index:2; max-width:var(--wrap); margin:0 auto;
+          padding:96px var(--pad); color:var(--paper); width:100%; }
+.band h2{ color:var(--paper); max-width:16ch; }
+.band p{ color:#E4E2DE; font-size:18px; line-height:1.62; max-width:52ch; margin-top:26px; }
+.band .section-lbl{ color:#C9C6C1; }
+.band .section-lbl::before{ background:var(--yellow); }
+.band .sem{ color:var(--yellow); }
+.band .btn-row{ margin-top:38px; }
+@supports (animation-timeline: view()){
+  .band img{ animation:shotDrift linear both; animation-timeline:view(); animation-range:cover 0% cover 100%; }
+}
+
+/* ---------- SPLIT: half photograph, half copy ---------- */
+.split{ display:grid; grid-template-columns:1fr 1fr; align-items:stretch; min-height:min(72vh,660px); }
+.split.flip .split-media{ order:2; }
+.split-media{ position:relative; overflow:hidden; min-height:340px; background:var(--bone); }
+.split-media img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.split-copy{ display:flex; flex-direction:column; justify-content:center; padding:clamp(36px,5vw,88px); }
+.split-copy h2{ margin-bottom:22px; }
+@supports (animation-timeline: view()){
+  .split-media img{ animation:shotDrift linear both; animation-timeline:view(); animation-range:cover 0% cover 100%; }
+}
+@media (max-width:860px){
+  .split{ grid-template-columns:1fr; }
+  .split.flip .split-media{ order:0; }
+  .split-media{ min-height:56vw; }
+}
+
+/* ---------- SQUARE IMAGE GRID ---------- */
+.tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; }
+.tiles.g3{ grid-template-columns:repeat(3,1fr); }
+.tile{ position:relative; aspect-ratio:1/1; overflow:hidden; background:var(--ink); display:block; }
+.tile img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+           transition:transform .6s cubic-bezier(.22,1,.36,1); }
+.tile:hover img{ transform:scale(1.06); }
+.tile::after{ content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg, rgba(10,10,10,.05) 40%, rgba(10,10,10,.82) 100%); }
+.tile-cap{ position:absolute; left:0; right:0; bottom:0; z-index:2; padding:26px 24px; color:var(--paper); }
+.tile-cap .k{ font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+              color:var(--yellow); display:block; margin-bottom:9px; }
+.tile-cap .t{ font-size:19px; font-weight:500; line-height:1.24; letter-spacing:-.01em; display:block; }
+.tile-cap .d{ font-size:13.5px; color:#D6D3CE; margin-top:8px; line-height:1.5; }
+@media (max-width:1000px){ .tiles{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:560px){ .tiles, .tiles.g3{ grid-template-columns:1fr; } }
+
+/* ---------- MEDIA CARD: photo on top, copy under ---------- */
+.shot-card{ display:block; background:var(--pure); border:1px solid rgba(20,20,20,.08);
+            border-radius:var(--radius-card); overflow:hidden; transition:border-color .22s, transform .22s; }
+.shot-card .m{ position:relative; aspect-ratio:3/2; overflow:hidden; background:var(--bone); }
+.shot-card .m img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+                   transition:transform .6s cubic-bezier(.22,1,.36,1); }
+.shot-card:hover .m img{ transform:scale(1.05); }
+.shot-card:hover{ border-color:var(--blue); transform:translateY(-2px); }
+.shot-card .b{ padding:28px 26px 30px; }
+.shot-card .k{ font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
+               color:var(--blue); display:block; margin-bottom:10px; }
+.shot-card h3{ font-size:20px; margin-bottom:9px; }
+.shot-card p{ font-size:15px; line-height:1.6; color:var(--charcoal); }
+
+/* ---------- Sticky-stacking media panels ---------- */
+.stack{ display:flex; flex-direction:column; }
+.stack-card{ position:sticky; top:0; min-height:min(88vh,820px);
+  display:grid; grid-template-columns:1fr 1fr; align-items:stretch; overflow:hidden;
+  background:var(--paper); border-top:1px solid var(--bone-border); }
+.stack-card.on-dark{ background:var(--ink); color:var(--paper); border-top-color:var(--onyx-border); }
+.stack-media{ position:relative; overflow:hidden; background:var(--bone); }
+.stack-media img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.stack-body{ display:flex; flex-direction:column; justify-content:space-between;
+             padding:clamp(34px,4.6vw,76px); }
+.stack-head{ display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.stack-num{ font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); }
+.stack-card.on-dark .stack-num{ color:var(--yellow); }
+.stack-card h3{ font-size:clamp(28px,3.4vw,50px); font-weight:400; letter-spacing:-.026em;
+  line-height:1.06; margin:28px 0 20px; max-width:17ch; font-family:var(--sans); }
+.stack-card.on-dark h3{ color:var(--paper); }
+.stack-card p{ font-size:17px; line-height:1.62; color:var(--charcoal); max-width:52ch; }
+.stack-card.on-dark p{ color:var(--grey); }
+.stack-foot{ display:flex; align-items:flex-end; justify-content:space-between; gap:26px;
+  flex-wrap:wrap; margin-top:40px; padding-top:28px; border-top:1px solid var(--bone-border); }
+.stack-card.on-dark .stack-foot{ border-top-color:var(--onyx-border); }
+.stack-metric{ font-size:clamp(30px,3.2vw,46px); font-weight:400; letter-spacing:-.03em; line-height:1; }
+.stack-card.on-dark .stack-metric{ color:var(--yellow); }
+.stack-metric small{ display:block; font-size:13px; letter-spacing:0; color:var(--charcoal); margin-top:9px; }
+.stack-card.on-dark .stack-metric small{ color:var(--paper-dim); }
+@supports (animation-timeline: view()){
+  .stack-media img{ animation:shotDrift linear both; animation-timeline:view(); animation-range:cover 0% cover 100%; }
+}
+@media (max-width:860px){
+  .stack-card{ position:static; grid-template-columns:1fr; min-height:0; }
+  .stack-media{ min-height:58vw; }
+}
+
+/* the page still rides over a pinned hero */
 .hero-frame{ position:sticky; top:0; z-index:0; }
 main > section{ position:relative; z-index:1; }
-/* Sections must be opaque or the pinned hero shows through as they pass over it. */
 main > section.sec{ background:var(--paper); }
 main > section.bone-full{ background:var(--bone); }
 main > section.dark-full, main > section.cta{ background:var(--ink); }
 main > section.onyx-full{ background:var(--onyx); }
-/* The first section over the hero gets the lifted edge that sells the effect. */
-main > section:first-of-type{ border-radius:var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow:0 -24px 60px rgba(20,20,20,.10); }
-
-@supports (animation-timeline: view()){
-  /* Hero settles back and dims as the page rides over it. */
-  .hero-frame .hero{ animation:heroExit linear both;
-    animation-timeline:view(); animation-range:exit 0% exit 100%; will-change:transform,opacity; }
-  @keyframes heroExit{ to{ transform:scale(.93); opacity:.3; } }
-
-  /* Scroll-scrubbed rise, replacing the observer's on/off reveal where supported. */
-  .scrub{ animation:scrubRise linear both;
-    animation-timeline:view(); animation-range:entry 0% entry 62%; }
-  @keyframes scrubRise{ from{ opacity:0; transform:translateY(48px); } to{ opacity:1; transform:none; } }
-}
-
-/* ---------- Sticky-stacking full-height cards ---------- */
-.stack{ display:flex; flex-direction:column; gap:28px; }
-.stack-card{ position:sticky; top:var(--stack-top);
-  border-radius:var(--radius-lg); padding:clamp(32px,4.4vw,72px);
-  background:var(--pure); border:1px solid var(--bone-border);
-  box-shadow:0 -10px 50px rgba(20,20,20,.08);
-  min-height:min(74vh,660px); display:flex; flex-direction:column; justify-content:space-between; }
-.stack-card.on-dark{ background:var(--onyx-2); border-color:var(--onyx-border); color:var(--paper); }
-.stack-card.on-dark h3, .stack-card.on-dark .stack-num{ color:var(--paper); }
-.stack-card.on-dark p{ color:var(--grey); }
-.stack-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:28px; flex-wrap:wrap; }
-.stack-num{ font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); }
-.stack-card.on-dark .stack-num{ color:var(--yellow); }
-.stack-card h3{ font-size:clamp(28px,3.6vw,52px); font-weight:300; letter-spacing:-.026em;
-  line-height:1.08; margin:26px 0 20px; max-width:18ch; font-family:var(--sans); }
-.stack-card p{ font-size:17px; line-height:1.65; color:var(--charcoal); max-width:58ch; }
-.stack-foot{ display:flex; align-items:flex-end; justify-content:space-between; gap:28px;
-  flex-wrap:wrap; margin-top:44px; padding-top:30px; border-top:1px solid var(--bone-border); }
-.stack-card.on-dark .stack-foot{ border-top-color:var(--onyx-border); }
-.stack-metric{ font-size:clamp(30px,3.4vw,46px); font-weight:400; letter-spacing:-.03em; line-height:1; }
-.stack-card.on-dark .stack-metric{ color:var(--yellow); }
-.stack-metric small{ display:block; font-size:13px; font-weight:400; letter-spacing:0;
-  color:var(--charcoal); margin-top:10px; }
-.stack-card.on-dark .stack-metric small{ color:var(--paper-dim); }
-
-@supports (animation-timeline: view()){
-  /* Outgoing cards settle back so the incoming one reads as landing on top. */
-  .stack-card{ animation:stackSettle linear both;
-    animation-timeline:view(); animation-range:exit 0% exit 100%; }
-  @keyframes stackSettle{ to{ transform:scale(.94); } }
-}
+main > section.band{ background:var(--ink); }
 
 @media (prefers-reduced-motion: reduce){
   .hero-frame{ position:static; }
-  .stack-card{ position:static; min-height:0; }
-  .hero-frame .hero, .stack-card, .scrub{ animation:none; }
-}
-@media (max-width:860px){
-  .stack-card{ position:static; min-height:0; padding:32px 26px; }
-  .hero-frame{ position:static; }
-  .sec{ padding:84px var(--pad); }
-  .sec-inner{ padding:84px var(--pad); }
-  main > section:first-of-type{ border-radius:var(--radius) var(--radius) 0 0; }
+  .stack-card{ position:static; }
+  .hero.shot .shot-img, .band img, .split-media img, .stack-media img{ animation:none; }
+  .tile img, .shot-card .m img{ transition:none; }
 }
 
 /* ============================================================================
    RESPONSIVE OVERRIDES — must stay last in the file.
-   The surface upgrades above re-declare .btn, .btn.sm and nav.pill padding, so
-   anything that scales those down for small screens has to come after them.
    ========================================================================== */
+@media (max-width:860px){ .hero-frame{ position:static; } }
 @media (max-width:600px){
   .navwrap{ top:10px; padding:0 10px; }
   nav.pill{ padding:7px 7px 7px 14px; gap:8px; }
   .nav-logo img{ height:15px; }
-  .btn{ padding:14px 22px; font-size:14px; }
+  .btn{ padding:13px 20px; font-size:13.5px; }
   .btn.sm{ padding:9px 13px; font-size:12px; }
   .nav-toggle{ padding:8px 11px; font-size:10px; letter-spacing:.06em; }
-  .hero{ padding:124px 20px 64px; border-radius:var(--radius); }
-  .hero-display{ font-size:clamp(30px,8.4vw,40px); }
-  .hero-sub{ font-size:17px; }
+  .hero.shot{ min-height:auto; }
+  .hero.shot .hero-in{ padding:132px 18px 56px; }
+  .band{ min-height:auto; }
+  .band-in{ padding:68px 18px; }
+  .sec, .sec-inner{ padding:76px var(--pad); }
 }
 @media (max-width:400px){
   .btn.sm{ padding:9px 11px; font-size:11.5px; }
   .nav-logo img{ height:14px; }
-  .nav-toggle{ padding:7px 9px; }
 }

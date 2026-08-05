@@ -372,13 +372,160 @@ def steps(items):
     return '<div class="steps">' + "".join(out) + "</div>"
 
 
+# ---------------------------------------------------------------------------
+# Photography
+# ---------------------------------------------------------------------------
+# Real Consultus Digital photography from the studio library. Every page gets a
+# picture chosen from its service or division so sibling pages do not all open
+# on the same shot.
+
+P = "/assets/service-photos/"
+PH = "/assets/photos/"
+
+SERVICE_PHOTO = {
+    "digital-marketing": "planning-office.jpg",
+    "performance-marketing": "graphs-team.jpg",
+    "paid-search": "google-search.jpg",
+    "google-ads": "google-search.jpg",
+    "paid-search-shopping": "boxes-shelf.jpg",
+    "paid-social": "social-apps.jpg",
+    "seo": "analytics-workspace.jpg",
+    "local-seo": "shopfront.jpg",
+    "ai-search": "ai-chat.jpg",
+    "web-design": "webdesign-screen.jpg",
+    "shopify-cro": "ui-design.jpg",
+    "crm-revops": "contact-form.jpg",
+    "email-sms": "phone-apps.jpg",
+    "content-marketing": "typing-desk.jpg",
+    "thought-leadership": "typing-office.jpg",
+    "ad-creative": "studio-camera.jpg",
+    "performance-creative": "studio-setup.jpg",
+    "analytics": "analytics-laptop.jpg",
+    "call-tracking": "data-viz-laptop.jpg",
+    "ecommerce-growth": "boxes-warehouse.jpg",
+    "marketplace-marketing": "boxes-shelf.jpg",
+}
+
+DIVISION_PHOTO = {
+    "Healthcare": "team-meeting.jpg",
+    "Trades": "open-sign.jpg",
+    "DTC": "boxes-warehouse.jpg",
+    "Professional Services": "colleagues.jpg",
+}
+
+DIVISION_POOL = {
+    "Healthcare": ["team-meeting.jpg", "colleagues.jpg", "planning-office.jpg",
+                   "contact-form.jpg", "analytics-workspace.jpg", "typing-office.jpg"],
+    "Trades": ["open-sign.jpg", "shopfront.jpg", "cafe-owners.jpg",
+               "planning-office.jpg", "colleagues.jpg", "typing-office.jpg"],
+    "DTC": ["boxes-warehouse.jpg", "boxes-shelf.jpg", "boxes-stack.jpg",
+            "social-apps.jpg", "phone-apps.jpg", "camera-lenses.jpg"],
+    "Professional Services": ["colleagues.jpg", "planning-office.jpg", "team-meeting.jpg",
+                              "typing-office.jpg", "charts-desk.jpg", "graphs-team.jpg"],
+}
+
+CAPABILITY_PHOTO = {
+    "paid-media": P + "google-search.jpg",
+    "performance-creative": P + "studio-setup.jpg",
+    "seo-ai-search": P + "analytics-workspace.jpg",
+    "content-authority": P + "typing-desk.jpg",
+    "websites-cro": P + "webdesign-screen.jpg",
+    "crm-automation": P + "contact-form.jpg",
+    "analytics-intelligence": P + "analytics-laptop.jpg",
+}
+
+OFFICE = [PH + f for f in ("office-lounge.jpg", "office-meeting.jpg", "team-studio.jpg",
+                           "office-pingpong.jpg", "team-group.jpg", "office-wall.jpg")]
+
+
+def service_photo(slug):
+    return P + SERVICE_PHOTO.get(slug, "planning-office.jpg")
+
+
+def division_photo(division):
+    return P + DIVISION_PHOTO.get(division, "planning-office.jpg")
+
+
+def page_photo(seed, division):
+    """Deterministic pick from the division's pool, so siblings differ."""
+    return P + pick(seed, DIVISION_POOL.get(division, list(SERVICE_PHOTO.values())))
+
+
+def img(src, alt, *, w=900, h=600, eager=False, cls=""):
+    load = 'loading="eager" fetchpriority="high"' if eager else 'loading="lazy"'
+    c = f' class="{cls}"' if cls else ""
+    return (f'<img{c} src="{esc(src)}" alt="{esc(alt)}" width="{w}" height="{h}" '
+            f'{load} decoding="async">')
+
+
+def band(label, heading, body, photo, alt, *, accent=None, buttons=()):
+    """Full-bleed photograph with copy over it."""
+    h = esc(heading)
+    if accent:
+        h = h.replace(esc(accent), f'<span class="sem">{esc(accent)}</span>', 1)
+    btns = ""
+    if buttons:
+        btns = '<div class="btn-row">' + "".join(
+            f'<a class="btn {c}" href="{esc(href)}">{esc(t)} <span class="arr">&rarr;</span></a>'
+            for t, href, c in buttons) + "</div>"
+    return f"""<section class="sec band">
+  {img(photo, alt, w=1600, h=900)}
+  <div class="band-in">
+    <span class="section-lbl rv">{esc(label)}</span>
+    <h2 class="sec-title rv mt24" style="--d:40ms">{h}</h2>
+    <p class="rv" style="--d:90ms">{esc(body)}</p>
+    {btns}
+  </div>
+</section>"""
+
+
+def split(label, heading, body, photo, alt, *, flip=False, extra="", accent=None):
+    """Half photograph, half copy."""
+    h = esc(heading)
+    if accent:
+        h = h.replace(esc(accent), f'<span class="sem">{esc(accent)}</span>', 1)
+    return f"""<section class="sec split{' flip' if flip else ''}">
+  <div class="split-media">{img(photo, alt, w=900, h=1350)}</div>
+  <div class="split-copy">
+    <span class="section-lbl rv">{esc(label)}</span>
+    <h2 class="sec-title rv mt24" style="--d:40ms">{h}</h2>
+    <div class="prose rv mt24" style="--d:90ms"><p>{esc(body)}</p></div>
+    {extra}
+  </div>
+</section>"""
+
+
+def tiles(items, *, cols=4):
+    """Square photographic tiles. items = [(kicker, title, desc, href, photo, alt)]"""
+    out = []
+    for k, t, d, href, photo, alt in items:
+        desc = f'<span class="d">{esc(d)}</span>' if d else ""
+        out.append(f"""<a class="tile" href="{esc(href)}">
+  {img(photo, alt, w=900, h=900)}
+  <span class="tile-cap"><span class="k">{esc(k)}</span><span class="t">{esc(t)}</span>{desc}</span>
+</a>""")
+    cls = "tiles" if cols == 4 else "tiles g3"
+    return f'<div class="{cls} rv">' + "".join(out) + "</div>"
+
+
+def shot_cards(items):
+    """Photo-topped cards. items = [(kicker, title, desc, href, photo, alt)]"""
+    out = []
+    for i, (k, t, d, href, photo, alt) in enumerate(items):
+        out.append(f"""<a class="shot-card rv" style="--d:{min(i,6)*40}ms" href="{esc(href)}">
+  <span class="m">{img(photo, alt)}</span>
+  <span class="b"><span class="k">{esc(k)}</span><h3>{esc(t)}</h3><p>{esc(d)}</p></span>
+</a>""")
+    return '<div class="grid g3">' + "".join(out) + "</div>"
+
+
 def stack(cards):
     """Full-height cards that pin and stack as the page scrolls.
 
     cards = [(kicker, title, body, metric, metric_label, link_text, href, dark)]
     """
     out = []
-    for i, (kick, title, body, metric, mlabel, ltext, href, dark) in enumerate(cards):
+    for i, (kick, title, body, metric, mlabel, ltext, href, dark, photo, alt) in enumerate(cards):
         cls = "stack-card on-dark" if dark else "stack-card"
         metric_html = ""
         if metric:
@@ -389,7 +536,9 @@ def stack(cards):
             btn = "btn primary on-dark" if dark else "btn primary"
             link_html = (f'<a class="{btn}" href="{esc(href)}">{esc(ltext)} '
                          f'<span class="arr">&rarr;</span></a>')
-        out.append(f"""<div class="{cls}" style="z-index:{i + 1}">
+        # alternate which side the photograph sits on
+        media = f'<div class="stack-media">{img(photo, alt, w=900, h=1200)}</div>'
+        body_html = f"""<div class="stack-body">
   <div>
     <div class="stack-head"><span class="stack-num">{esc(kick)}</span>
       <span class="stack-num">{i + 1:02d} / {len(cards):02d}</span></div>
@@ -397,7 +546,9 @@ def stack(cards):
     <p>{esc(body)}</p>
   </div>
   <div class="stack-foot">{metric_html}{link_html}</div>
-</div>""")
+</div>"""
+        inner = (media + body_html) if i % 2 == 0 else (body_html + media)
+        out.append(f'<div class="{cls}" style="z-index:{i + 1}">{inner}</div>')
     return '<div class="stack">' + "".join(out) + "</div>"
 
 
@@ -414,7 +565,8 @@ def prose(paras):
     return '<div class="prose">' + "".join(f"<p>{p}</p>" for p in paras) + "</div>"
 
 
-def hero(kw_h1, display, accent, sub, facts=(), *, dark=False, trail=None, buttons=True):
+def hero(kw_h1, display, accent, sub, facts=(), *, dark=False, trail=None, buttons=True,
+         photo=None, alt=""):
     disp = esc(display)
     if accent:
         disp = disp.replace(esc(accent), f'<span class="sem">{esc(accent)}</span>', 1)
@@ -433,7 +585,25 @@ def hero(kw_h1, display, accent, sub, facts=(), *, dark=False, trail=None, butto
                 % ((" on-dark", " on-dark") if dark else ("", "")))
     crumb_html = ""
     if trail:
-        crumb_html = f'<div class="hero-crumbs">{C.crumbs(trail, on_dark=dark)}</div>'
+        crumb_html = f'<div class="hero-crumbs">{C.crumbs(trail, on_dark=bool(photo) or dark)}</div>'
+    if photo:
+        # Full-bleed photograph with the copy sitting over a scrim.
+        shot = img(photo, alt, w=1600, h=900, eager=True, cls="shot-img")
+        btns = btns.replace('class="btn primary"', 'class="btn primary on-dark"') \
+                   .replace('class="btn secondary"', 'class="btn secondary on-dark"')
+        return f"""<div class="hero-frame">
+<section class="hero shot">
+  {shot}
+  <div class="hero-in">
+    {crumb_html}
+    <h1 class="hero-kw rv">{esc(kw_h1)}</h1>
+    <p class="hero-display{size_cls} rv" style="--d:60ms">{disp}</p>
+    <p class="hero-sub rv" style="--d:140ms">{esc(sub)}</p>
+    {facts_html}
+    {btns}
+  </div>
+</section>
+</div>"""
     return f"""<div class="hero-frame">
 <section class="hero {'dark' if dark else 'light'}">
   <div class="hero-in">
@@ -554,14 +724,26 @@ def r_homepage(p, ix):
     div_stack = stack([
         (d["unit"], d["thesis"], d["lede"],
          d["proof"]["stat"], f"{d['proof']['stat_label']}, {d['proof']['client']}",
-         f"{d['label']} practice", f"/{d['root']}/", i % 2 == 1)
+         f"{d['label']} practice", f"/{d['root']}/", i % 2 == 1,
+         division_photo(d["label"]), f"{d['label']} marketing at Consultus Digital")
         for i, d in enumerate(DIVS)
     ])
+    cap_tiles = tiles([
+        ("Capability", c2["name"], c2["blurb"], f"/capabilities/{c2['slug']}/",
+         CAPABILITY_PHOTO.get(c2["slug"], P + "planning-office.jpg"), c2["name"])
+        for c2 in CAPABILITIES[:4]
+    ])
+    cap_tiles_2 = tiles([
+        ("Capability", c2["name"], c2["blurb"], f"/capabilities/{c2['slug']}/",
+         CAPABILITY_PHOTO.get(c2["slug"], P + "planning-office.jpg"), c2["name"])
+        for c2 in CAPABILITIES[4:]
+    ], cols=3)
     cap_items = [(c2["name"], f"/capabilities/{c2['slug']}/") for c2 in CAPABILITIES]
     sol_items = [(s[1], f"/growth-solutions/{s[0]}/") for s in SHARED_SOLUTIONS]
 
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], c['facts'])}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], c['facts'],
+      photo=PH + 'office-lounge.jpg', alt='The Consultus Digital studio in Toronto')}
 
 <section class="sec thesis dark-full"><div class="sec-inner">
   <p class="rv">{esc(c['thesis'])}</p>
@@ -578,10 +760,10 @@ def r_homepage(p, ix):
   {sec_head("Capabilities", "Seven disciplines, applied to whichever outcome the division is judged on.",
             "These are the parts the programs are built from. Which ones lead depends entirely on "
             "the business and what is currently constraining it.")}
-  <div class="grid g4">{''.join(
-      f'<a class="card rv" style="--d:{i*40}ms" href="/capabilities/{c2["slug"]}/"><h3>{esc(c2["name"])}</h3><p>{esc(c2["blurb"])}</p></a>'
-      for i, c2 in enumerate(CAPABILITIES))}</div>
-</div></section>
+</div>
+{cap_tiles}
+{cap_tiles_2}
+</section>
 
 <section class="sec dark-full"><div class="sec-inner">
   {sec_head("Proof", "Numbers our clients approved for publication.",
@@ -629,7 +811,8 @@ def r_divisions_hub(p, ix):
           </div>
         </div>"""
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec">
   <div class="prose rv" style="max-width:70ch">{''.join(f'<p>{esc(x)}</p>' for x in c['body'])}</div>
 </section>
@@ -653,7 +836,8 @@ def r_capability_hub(p, ix):
           <div>{ticks(cap['deliverables'][:4])}</div>
         </div>"""
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec">{blocks}</section>
 {cta("Not sure which capability you need?", "Most businesses come asking for one channel and leave with a different first move. The call is free either way.", accent="which capability")}
 """
@@ -668,7 +852,8 @@ def r_solution_hub(p, ix):
         f'<h3>{esc(s[1])}</h3><p>{esc(s[2])}</p></a>'
         for i, s in enumerate(SHARED_SOLUTIONS))
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec"><div class="grid g3">{cards}</div></section>
 <section class="sec bone-full"><div class="sec-inner">
   {sec_head("By division", "The same outcomes, framed for your industry.",
@@ -705,7 +890,8 @@ def r_work_hub(p, ix):
         f'<ul class="ticks"><li>{esc(s)}</li></ul></div>'
         for i, (n, k, s, d) in enumerate(cases))
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec"><div class="grid g3">{cards}</div>
   <p class="sec-sub mt40 rv">Case study pages for these engagements are published on the main
   Consultus Digital site. Figures shown here are the client-approved numbers.</p>
@@ -725,7 +911,8 @@ def r_insight_hub(p, ix):
     c = CORPORATE["/insights/"]
     trail = [("Home", "/"), ("Insights", "/insights/")]
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec">
   {sec_head("Insights", "Published when there is something worth saying.",
             "Articles are being migrated into this architecture. In the meantime, the division "
@@ -743,7 +930,8 @@ def r_expert_hub(p, ix):
     c = CORPORATE["/experts/"]
     trail = [("Home", "/"), ("Experts", "/experts/")]
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec">
   {sec_head("Practice leads", "Each division has a named lead strategist.",
             "The person who sets the plan is the person you meet on the strategy call and the "
@@ -765,7 +953,8 @@ def r_about(p, ix):
         f'<h3>{esc(t)}</h3><p>{esc(b)}</p></div>'
         for i, (t, b) in enumerate(c["principles"]))
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec"><div class="prose rv" style="max-width:70ch">
   {''.join(f'<p>{esc(x)}</p>' for x in c['body'])}
 </div></section>
@@ -788,7 +977,8 @@ def r_contact(p, ix):
     c = CORPORATE["/contact/"]
     trail = [("Home", "/"), ("Contact", "/contact/")]
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec">
   <div class="sec-head">
     <div class="lhs"><span class="section-lbl rv">Get in touch</span>
@@ -819,7 +1009,8 @@ def r_conversion(p, ix):
     trail = [("Home", "/"), ("Book a strategy call", p.path)]
     agenda = steps(c["agenda"])
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail)}
+{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
 <section class="sec">
   {sec_head("The call", "What the thirty minutes actually covers.",
             "It is a working session rather than a pitch. You will get the recommendation whether "
@@ -854,7 +1045,9 @@ def r_shared_capability(p, ix):
     title = mk_title(f"{cap['name']}")
     desc = f"{cap['blurb']} Delivered across healthcare, trades, DTC and professional services."
     body = f"""
-{hero(f"{cap['name']} Agency", cap['lede'], None, cap['blurb'], trail=trail)}
+{hero(f"{cap['name']} Agency", cap['lede'], None, cap['blurb'], trail=trail,
+      photo=CAPABILITY_PHOTO.get(cap['slug'], P + 'planning-office.jpg'),
+      alt=f"{cap['name']} work in progress")}
 <section class="sec">
   <div class="sec-head">
     <div class="lhs"><span class="section-lbl rv">How it works</span>
@@ -897,7 +1090,8 @@ def r_shared_solution(p, ix):
                 break
     others = [(x[1], f"/growth-solutions/{x[0]}/") for x in SHARED_SOLUTIONS if x[0] != slug]
     body = f"""
-{hero(name, blurb, None, context, trail=trail)}
+{hero(name, blurb, None, context, trail=trail,
+      photo=pick(p.path, OFFICE), alt='Consultus Digital team at work')}
 <section class="sec">
   <div class="sec-head">
     <div class="lhs"><span class="section-lbl rv">The situation</span>
@@ -946,19 +1140,24 @@ def r_division_hub(p, ix):
         </div>"""
 
     # The four beats that decide whether this practice is a fit, as stacking cards.
+    pool = DIVISION_POOL.get(p.division, [])
     model_stack = stack([
         ("What it is measured on", d["unit"].capitalize(),
          d["thesis"], d["proof"]["stat"],
          f"{d['proof']['stat_label']}, {d['proof']['client']}",
-         "See the numbers", f"/{d['root']}/case-studies/", False),
+         "See the numbers", f"/{d['root']}/case-studies/", False,
+         P + pool[0], f"{d['label']} programs at Consultus Digital"),
         ("Where the money leaks", "Fix intake before raising budget.",
          d["judgment"], None, None, "Growth assessment",
-         f"/{d['root']}/growth-assessment/", True),
+         f"/{d['root']}/growth-assessment/", True,
+         P + pool[1], "Reviewing an account with the client"),
         ("The constraint", "What the category will let you say.",
-         d["regulatory"], None, None, None, None, False),
+         d["regulatory"], None, None, None, None, False,
+         P + pool[2], "Planning a compliant campaign"),
         ("When to walk away", "The cases where we say no.",
          d["not_for"], None, None, "Talk to the practice lead",
-         f"/{d['root']}/lead-strategist/", True),
+         f"/{d['root']}/lead-strategist/", True,
+         P + pool[3], "A strategy session in the Toronto studio"),
     ])
 
     sector_items = [(s, f"/{d['industries_root']}/{slugify(s)}/") for s in sectors]
@@ -969,15 +1168,19 @@ def r_division_hub(p, ix):
     body = f"""
 {hero(d['hero_kw'], d['display'], d['display_accent'], d['lede'],
       [f"Measured on {d['unit']}", f"{len(sectors)} sectors", f"{sum(len(v) for v in sectors.values())} industries"],
-      trail=trail)}
+      trail=trail, photo=division_photo(p.division),
+      alt=f"{d['label']} marketing at Consultus Digital")}
 
-<section class="sec thesis dark-full"><div class="sec-inner"><p class="rv">{esc(d['thesis'])}</p></div></section>
+{band("The thesis", d['thesis'], d['lede'], P + DIVISION_POOL[p.division][4],
+      f"{d['label']} clients at Consultus Digital",
+      buttons=(("Book a strategy call", "/book-a-strategy-call/", "primary on-dark"),
+               ("See the case studies", f"/{d['root']}/case-studies/", "secondary on-dark")))}
 
 <section class="sec">
   {sec_head("How this practice works", "Four things worth knowing before you brief anyone.",
             "Including the parts that cost us revenue to say out loud.")}
-  {model_stack}
 </section>
+{model_stack}
 
 <section class="sec bone-full"><div class="sec-inner">
   {sec_head("The problem", "What usually brings a business here.", "")}
@@ -1052,7 +1255,8 @@ def r_industry_directory(p, ix):
       "Each one buys differently",
       f"The full {d['low']} directory, grouped into {len(sectors)} sectors. "
       f"Every industry has its own page covering how acquisition works there, what it is measured on and where it goes wrong.",
-      trail=trail)}
+      trail=trail,
+      photo=division_photo(p.division), alt=f"{d['label']} marketing at Consultus Digital")}
 <section class="sec">{groups}</section>
 {cta("Cannot find yours?", "The list covers the industries we have run programs in. If yours is adjacent, the call will tell you whether the playbook transfers.", accent="Cannot find yours?", secondary=(f"{d['label']} practice", f"/{d['root']}/"))}
 """
@@ -1088,7 +1292,8 @@ def r_division_service_hub(p, ix):
       f"Ten services. One number: {d['unit']}.", d['unit'],
       f"Every service below is judged on whether it moved {d['unit']}. "
       f"Which ones lead depends on where the business is currently losing money.",
-      trail=trail)}
+      trail=trail,
+      photo=division_photo(p.division), alt=f"{d['label']} marketing at Consultus Digital")}
 <section class="sec">{blocks}</section>
 <section class="sec bone-full"><div class="sec-inner">
   {sec_head("By industry", "Every service, applied to a specific industry.",
@@ -1116,7 +1321,8 @@ def r_division_solution_hub(p, ix):
     body = f"""
 {hero(f"{d['label']} Growth Solutions", "Start from what is going wrong.", "what is going wrong",
       f"Ten situations {d['buyer']} bring us, and what we would actually do about each one.",
-      trail=trail)}
+      trail=trail,
+      photo=division_photo(p.division), alt=f"{d['label']} marketing at Consultus Digital")}
 <section class="sec"><div class="grid g3">{cards}</div></section>
 <section class="sec bone-full"><div class="sec-inner">
   {sec_head("Across every division", "The same outcomes, framed for other industries.", "")}
@@ -1139,7 +1345,8 @@ def r_division_solution(p, ix):
     title = mk_title(f"{sol['name']} for {d['label']}")
     desc = f"{sol['lede']} {sol['problem']} Measured on {sol['measure']}."
     body = f"""
-{hero(f"{d['label']} {sol['name']}", sol['problem'], None, sol['lede'], trail=trail)}
+{hero(f"{d['label']} {sol['name']}", sol['problem'], None, sol['lede'], trail=trail,
+      photo=page_photo(p.path, p.division), alt=f"{d['label']} marketing work")}
 <section class="sec">
   {sec_head("What we do", "Three moves, in this order.", esc(sol['lede']))}
   {approach}
@@ -1173,7 +1380,8 @@ def r_division_case_hub(p, ix):
     body = f"""
 {hero(f"{d['label']} Case Studies", f"{pr['client']}. {pr['stat']} {pr['stat_label']}.", pr['stat'],
       "Client-approved figures from the engagement. Where a number is not published, the case study says so "
-      "rather than substituting a percentage that sounds better.", trail=trail)}
+      "rather than substituting a percentage that sounds better.", trail=trail,
+      photo=division_photo(p.division), alt=f"{d['label']} marketing at Consultus Digital")}
 <section class="sec dark-full"><div class="sec-inner">
   {sec_head("The numbers", esc(pr['client']), esc(pr['stat_sub']), on_dark=True)}
   {stat_grid(div_proof_stats(d), on_dark=True)}
@@ -1197,7 +1405,8 @@ def r_division_insight_hub(p, ix):
     body = f"""
 {hero(f"{d['label']} Marketing Insights", "Writing from inside the accounts.", "inside the accounts",
       f"Notes on what actually happens in {d['low']} programs, including the parts that did not work.",
-      trail=trail)}
+      trail=trail,
+      photo=division_photo(p.division), alt=f"{d['label']} marketing at Consultus Digital")}
 <section class="sec">
   {sec_head("Start here", "The three things worth knowing about this category.", "")}
   <div class="grid g3">
@@ -1221,7 +1430,8 @@ def r_division_strategist(p, ix):
     body = f"""
 {hero(f"{d['label']} Lead Strategist", "The person who sets the plan owns the number.", "owns the number",
       f"Every {d['low']} account has one strategist accountable for {d['unit']}. "
-      f"They take the first call and they are still there at the quarterly review.", trail=trail)}
+      f"They take the first call and they are still there at the quarterly review.", trail=trail,
+      photo=division_photo(p.division), alt=f"{d['label']} marketing at Consultus Digital")}
 <section class="sec">
   {sec_head("What they do", "Four things, and only four.", "")}
   {steps([
@@ -1255,7 +1465,8 @@ def r_division_assessment(p, ix):
 {hero(f"{d['label']} Growth Assessment", "A review of what you run now, and what we would change.",
       "what we would change",
       f"We audit the program against {d['unit']} rather than against impressions, then hand back "
-      f"the two or three changes with the largest effect. Whether or not they involve us.", trail=trail)}
+      f"the two or three changes with the largest effect. Whether or not they involve us.", trail=trail,
+      photo=division_photo(p.division), alt=f"{d['label']} marketing at Consultus Digital")}
 <section class="sec">
   {sec_head("What gets reviewed", "Five areas, in this order.", esc(d['judgment']))}
   {steps([
@@ -1315,7 +1526,8 @@ def r_sector_hub(p, ix):
 {hero(f"{sname} Marketing Agency", prof['lede'], None,
       f"Consultus Digital runs acquisition programs across {len(inds)} industries in this sector, "
       f"measured on {d['unit']}.",
-      [f"{len(inds)} industries", f"Buyer: {prof['buyer']}", f"Cycle: {prof['cycle']}"], trail=trail)}
+      [f"{len(inds)} industries", f"Buyer: {prof['buyer']}", f"Cycle: {prof['cycle']}"], trail=trail,
+      photo=page_photo(p.path, p.division), alt=f"Marketing for {lower_name(sname)}")}
 
 <section class="sec">
   <div class="sec-head">
@@ -1381,16 +1593,15 @@ def r_industry(p, ix):
              ("Industries", d["industries_hub"]), (sname, f"/{d['industries_root']}/{slugify(sname)}/"),
              (ind, p.path)]
 
-    svc_cards = ""
-    for i, sp in enumerate(svc_pages):
+    svc_items = []
+    for sp in svc_pages:
         slug = service_slug(sp)
         mod = SERVICES.get((p.division, slug))
         if not mod:
             continue
-        svc_cards += (f'<a class="card rv" style="--d:{min(i,6)*40}ms" href="{esc(sp.path)}">'
-                      f'<span class="num">{esc(mod["metric"])}</span>'
-                      f'<h3>{esc(mod["name"])} for {esc(low)}</h3>'
-                      f'<p>{esc(mod["blurb"])}</p></a>')
+        svc_items.append((mod["metric"], f"{mod['name']} for {low}", mod["blurb"],
+                          sp.path, service_photo(slug), f"{mod['name']} for {low}"))
+    svc_cards = shot_cards(svc_items)
 
     display = pick(p.path, [
         f"Marketing for {low}, measured on {d['unit']}.",
@@ -1418,7 +1629,8 @@ def r_industry(p, ix):
             else f"Marketing agency for {low}. {hook}")
     body = f"""
 {hero(f"{ind} Marketing Agency", display, accent, hook,
-      [f"Measured on {d['unit']}", sname, f"{len(svc_pages)} services"], trail=trail)}
+      [f"Measured on {d['unit']}", sname, f"{len(svc_pages)} services"], trail=trail,
+      photo=page_photo(p.path, p.division), alt=f"Marketing for {low}")}
 
 <section class="sec">
   <div class="sec-head">
@@ -1436,7 +1648,7 @@ def r_industry(p, ix):
 <section class="sec bone-full"><div class="sec-inner">
   {sec_head("Services", f"How we work with {low}.",
             f"Ten services, all measured on {d['unit']}. Most programs use two or three of them.")}
-  <div class="grid g3">{svc_cards}</div>
+  {svc_cards}
 </div></section>
 
 <section class="sec">
@@ -1549,7 +1761,8 @@ def r_service_industry(p, ix):
 
     body = f"""
 {hero(kw, display, mod['metric'], mod['blurb'],
-      [f"Measured on {mod['metric']}", d['label'], sname], trail=trail)}
+      [f"Measured on {mod['metric']}", d['label'], sname], trail=trail,
+      photo=service_photo(slug), alt=f"{mod['name']} for {low}")}
 
 <section class="sec">
   <div class="sec-head">
@@ -1566,8 +1779,11 @@ def r_service_industry(p, ix):
   </div>
 </section>
 
+{split("How we think about it", "Three decisions that shape the account.",
+       mod['decision'], page_photo(p.path + "s", p.division), f"Working on {lower_name(mod['name'])} for {low}",
+       flip=True)}
+
 <section class="sec bone-full"><div class="sec-inner">
-  {sec_head("How we think about it", "Three decisions that shape the account.", esc(mod['decision']))}
   <div class="grid g3">{angles}</div>
 </div></section>
 
