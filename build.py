@@ -1717,7 +1717,7 @@ def write_robots():
         f"Sitemap: {C.SITE}/sitemap_index.xml\n")
 
 
-def copy_assets():
+def copy_assets(base=""):
     dest = os.path.join(DIST, "assets")
     if os.path.isdir(dest):
         shutil.rmtree(dest)
@@ -1729,6 +1729,16 @@ def copy_assets():
         css = open(fc, encoding="utf-8").read()
         css = re.sub(r"(NuberNext[A-Za-z\-]*\.otf)", lambda m: m.group(1).lower(), css)
         open(fc, "w", encoding="utf-8").write(css)
+    # A subdirectory-hosted build has to prefix url() inside the stylesheets too,
+    # or the fonts 404 while every page looks fine.
+    if base:
+        for root, _dirs, files in os.walk(dest):
+            for name in files:
+                if not name.endswith(".css"):
+                    continue
+                fp = os.path.join(root, name)
+                css = open(fp, encoding="utf-8").read()
+                open(fp, "w", encoding="utf-8").write(_BASE_URL.sub(r"\1\2" + base + "/", css))
 
 
 # ---------------------------------------------------------------------------
@@ -1792,7 +1802,7 @@ def main():
         if args.lint:
             lint_page(p.path, html_str, findings)
 
-    copy_assets()
+    copy_assets(base)
     names, n_urls = write_sitemaps(built)
     write_robots()
 

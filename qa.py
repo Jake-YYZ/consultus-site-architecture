@@ -56,11 +56,13 @@ print(f"Generated pages:            {len(built)}")
 arch_paths = {r["Path"] for r in arch}
 manifest_path = os.path.join(DIST, ".build-manifest.json")
 scope = "all"
+BASE = ""
 if os.path.exists(manifest_path):
     with open(manifest_path, encoding="utf-8") as fh:
         manifest = json.load(fh)
     expected = set(manifest["paths"])
     scope = manifest.get("scope", "all")
+    BASE = (manifest.get("base") or "").rstrip("/")
 else:
     expected = arch_paths
 
@@ -127,6 +129,10 @@ for path, fp in built.items():
         multi_h1 += 1
 
     for href in HREF.findall(html_str):
+        # A subdirectory-hosted build (SITE_BASE) prefixes every root-relative
+        # URL, so strip it back off before comparing against architecture paths.
+        if BASE and href.startswith(BASE + "/"):
+            href = href[len(BASE):]
         if href.startswith("/assets/"):
             continue
         link_targets[href].add(path)
@@ -217,11 +223,20 @@ for a in ("assets/css/site.css", "assets/fonts.css",
     if not os.path.exists(os.path.join(DIST, a)):
         fail(f"missing asset: {a}")
 fonts_css = open(os.path.join(DIST, "assets", "fonts.css"), encoding="utf-8").read()
+n_fonts = 0
 for m in re.findall(r"url\(([^)]+)\)", fonts_css):
-    rel = m.strip("'\"").lstrip("/")
+    ref = m.strip("'\"")
+    if BASE:
+        if not ref.startswith(BASE + "/"):
+            fail(f"fonts.css url() is missing the {BASE} prefix and will 404: {ref}")
+            continue
+        ref = ref[len(BASE):]
+    rel = ref.lstrip("/")
     if not os.path.exists(os.path.join(DIST, rel)):
         fail(f"fonts.css references a file that does not exist: {m}")
-print("PASS  shared assets present and font paths resolve")
+    n_fonts += 1
+print(f"PASS  shared assets present and all {n_fonts} font paths resolve"
+      + (f" (with {BASE} prefix)" if BASE else ""))
 
 # ---------------------------------------------------------------- summary
 print()
