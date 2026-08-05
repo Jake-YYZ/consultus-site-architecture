@@ -1,0 +1,65 @@
+name: Build and deploy to GitHub Pages
+
+# The repo holds the generator and the content, not the 6,500 generated pages.
+# CI runs the build, so a copy edit is a one-line diff instead of a 145MB commit.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Which pages to build"
+        type: choice
+        options: ["indexable (Phase 1 + 2)", "everything (all 6,532)"]
+        default: "indexable (Phase 1 + 2)"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build the site
+        env:
+          # GitHub Pages serves a project repo under /<repo>/, so the generator
+          # prefixes every root-relative URL to match.
+          SITE_BASE: /${{ github.event.repository.name }}
+        run: |
+          if [ "${{ github.event.inputs.scope }}" = "everything (all 6,532)" ]; then
+            python3 build.py --all --clean --lint
+          else
+            python3 build.py --clean --lint
+          fi
+
+      - name: Verify the build
+        run: python3 qa.py
+
+      - name: Keep the preview out of search engines
+        run: |
+          printf 'User-agent: *\nDisallow: /\n' > dist/robots.txt
+          find dist -name '*.html' -print0 | xargs -0 perl -0777 -pi -e \
+            's{<meta name="robots" content="[^"]*">}{<meta name="robots" content="noindex, nofollow">}i;'
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
