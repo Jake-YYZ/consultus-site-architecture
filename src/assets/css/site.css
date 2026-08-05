@@ -410,3 +410,140 @@ footer{ background:var(--ink); color:var(--grey); padding:80px var(--pad) 32px; 
   .sec-inner{ padding:66px var(--pad); }
   .cta .sec-inner{ padding:76px var(--pad); }
 }
+
+/* ============================================================================
+   ROVEIA-GRADE SURFACES AND SCROLL MOTION
+   Layout and motion language: a hero the page scrolls over, full-height cards
+   that stack under a sticky offset, generous rounded surfaces and large light
+   display type. Built on the Consultus palette and NuberNext, CSS only, so it
+   costs nothing in page weight across 6,500 pages.
+   ========================================================================== */
+
+:root{
+  --radius:24px;        /* cards and content blocks */
+  --radius-lg:40px;     /* full-bleed feature blocks and the hero */
+  --radius-sm:16px;     /* small chips and inputs */
+  --stack-top:104px;    /* where stacking cards pin, below the nav */
+}
+
+/* ---------- Type: larger, lighter, more air ---------- */
+.hero-display{ font-size:clamp(42px,7vw,96px); font-weight:300; line-height:1.06; letter-spacing:-.03em; max-width:15ch; }
+.hero-display.long{ font-size:clamp(32px,4.6vw,64px); font-weight:300; line-height:1.1; letter-spacing:-.024em; max-width:22ch; }
+.hero-display.xlong{ font-size:clamp(28px,3.5vw,48px); font-weight:300; line-height:1.16; letter-spacing:-.018em; max-width:28ch; }
+.sec-title{ font-size:clamp(34px,5vw,64px); font-weight:300; line-height:1.08; letter-spacing:-.028em; }
+.cta h2{ font-size:clamp(40px,6.4vw,92px); font-weight:300; line-height:1.05; letter-spacing:-.03em; }
+.thesis p{ font-size:clamp(26px,3.4vw,46px); font-weight:300; line-height:1.24; letter-spacing:-.02em; max-width:24ch; }
+.hero-sub{ font-size:19px; line-height:1.6; max-width:56ch; }
+.sec-sub{ font-size:18px; line-height:1.65; }
+
+/* ---------- Surfaces: rounder, deeper padding ---------- */
+.card{ border-radius:var(--radius); padding:38px 36px; border-color:rgba(20,20,20,.07); }
+.card h3{ font-size:21px; font-weight:600; letter-spacing:-.01em; margin-bottom:12px; }
+.card p{ font-size:15.5px; line-height:1.65; }
+a.card:hover{ transform:translateY(-3px); box-shadow:0 20px 48px rgba(20,20,20,.09); }
+.rail a{ border-radius:var(--radius); padding:32px 30px; }
+.chip{ border-radius:100px; padding:11px 20px; }
+.tbl-wrap{ border-radius:var(--radius); }
+.hero{ border-radius:var(--radius-lg); }
+.hero-frame{ padding:10px; }
+.btn{ padding:17px 30px; font-size:15px; }
+.btn.sm{ padding:12px 22px; font-size:13.5px; }
+nav.pill{ padding:12px 12px 12px 26px; }
+
+/* Section rhythm: fewer, taller moments */
+.sec{ padding:132px var(--pad); }
+.sec-inner{ padding:132px var(--pad); }
+.sec.tight, .sec-inner.tight{ padding-top:84px; padding-bottom:84px; }
+.sec-head{ margin-bottom:76px; }
+.svc-block{ padding:64px 0; gap:72px; }
+
+/* ---------- The page scrolls over the hero ---------- */
+.hero-frame{ position:sticky; top:0; z-index:0; }
+main > section{ position:relative; z-index:1; }
+/* Sections must be opaque or the pinned hero shows through as they pass over it. */
+main > section.sec{ background:var(--paper); }
+main > section.bone-full{ background:var(--bone); }
+main > section.dark-full, main > section.cta{ background:var(--ink); }
+main > section.onyx-full{ background:var(--onyx); }
+/* The first section over the hero gets the lifted edge that sells the effect. */
+main > section:first-of-type{ border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow:0 -24px 60px rgba(20,20,20,.10); }
+
+@supports (animation-timeline: view()){
+  /* Hero settles back and dims as the page rides over it. */
+  .hero-frame .hero{ animation:heroExit linear both;
+    animation-timeline:view(); animation-range:exit 0% exit 100%; will-change:transform,opacity; }
+  @keyframes heroExit{ to{ transform:scale(.93); opacity:.3; } }
+
+  /* Scroll-scrubbed rise, replacing the observer's on/off reveal where supported. */
+  .scrub{ animation:scrubRise linear both;
+    animation-timeline:view(); animation-range:entry 0% entry 62%; }
+  @keyframes scrubRise{ from{ opacity:0; transform:translateY(48px); } to{ opacity:1; transform:none; } }
+}
+
+/* ---------- Sticky-stacking full-height cards ---------- */
+.stack{ display:flex; flex-direction:column; gap:28px; }
+.stack-card{ position:sticky; top:var(--stack-top);
+  border-radius:var(--radius-lg); padding:clamp(32px,4.4vw,72px);
+  background:var(--pure); border:1px solid var(--bone-border);
+  box-shadow:0 -10px 50px rgba(20,20,20,.08);
+  min-height:min(74vh,660px); display:flex; flex-direction:column; justify-content:space-between; }
+.stack-card.on-dark{ background:var(--onyx-2); border-color:var(--onyx-border); color:var(--paper); }
+.stack-card.on-dark h3, .stack-card.on-dark .stack-num{ color:var(--paper); }
+.stack-card.on-dark p{ color:var(--grey); }
+.stack-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:28px; flex-wrap:wrap; }
+.stack-num{ font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--blue); }
+.stack-card.on-dark .stack-num{ color:var(--yellow); }
+.stack-card h3{ font-size:clamp(28px,3.6vw,52px); font-weight:300; letter-spacing:-.026em;
+  line-height:1.08; margin:26px 0 20px; max-width:18ch; font-family:var(--sans); }
+.stack-card p{ font-size:17px; line-height:1.65; color:var(--charcoal); max-width:58ch; }
+.stack-foot{ display:flex; align-items:flex-end; justify-content:space-between; gap:28px;
+  flex-wrap:wrap; margin-top:44px; padding-top:30px; border-top:1px solid var(--bone-border); }
+.stack-card.on-dark .stack-foot{ border-top-color:var(--onyx-border); }
+.stack-metric{ font-size:clamp(30px,3.4vw,46px); font-weight:400; letter-spacing:-.03em; line-height:1; }
+.stack-card.on-dark .stack-metric{ color:var(--yellow); }
+.stack-metric small{ display:block; font-size:13px; font-weight:400; letter-spacing:0;
+  color:var(--charcoal); margin-top:10px; }
+.stack-card.on-dark .stack-metric small{ color:var(--paper-dim); }
+
+@supports (animation-timeline: view()){
+  /* Outgoing cards settle back so the incoming one reads as landing on top. */
+  .stack-card{ animation:stackSettle linear both;
+    animation-timeline:view(); animation-range:exit 0% exit 100%; }
+  @keyframes stackSettle{ to{ transform:scale(.94); } }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .hero-frame{ position:static; }
+  .stack-card{ position:static; min-height:0; }
+  .hero-frame .hero, .stack-card, .scrub{ animation:none; }
+}
+@media (max-width:860px){
+  .stack-card{ position:static; min-height:0; padding:32px 26px; }
+  .hero-frame{ position:static; }
+  .sec{ padding:84px var(--pad); }
+  .sec-inner{ padding:84px var(--pad); }
+  main > section:first-of-type{ border-radius:var(--radius) var(--radius) 0 0; }
+}
+
+/* ============================================================================
+   RESPONSIVE OVERRIDES — must stay last in the file.
+   The surface upgrades above re-declare .btn, .btn.sm and nav.pill padding, so
+   anything that scales those down for small screens has to come after them.
+   ========================================================================== */
+@media (max-width:600px){
+  .navwrap{ top:10px; padding:0 10px; }
+  nav.pill{ padding:7px 7px 7px 14px; gap:8px; }
+  .nav-logo img{ height:15px; }
+  .btn{ padding:14px 22px; font-size:14px; }
+  .btn.sm{ padding:9px 13px; font-size:12px; }
+  .nav-toggle{ padding:8px 11px; font-size:10px; letter-spacing:.06em; }
+  .hero{ padding:124px 20px 64px; border-radius:var(--radius); }
+  .hero-display{ font-size:clamp(30px,8.4vw,40px); }
+  .hero-sub{ font-size:17px; }
+}
+@media (max-width:400px){
+  .btn.sm{ padding:9px 11px; font-size:11.5px; }
+  .nav-logo img{ height:14px; }
+  .nav-toggle{ padding:7px 9px; }
+}

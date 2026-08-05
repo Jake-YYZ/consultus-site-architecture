@@ -372,6 +372,35 @@ def steps(items):
     return '<div class="steps">' + "".join(out) + "</div>"
 
 
+def stack(cards):
+    """Full-height cards that pin and stack as the page scrolls.
+
+    cards = [(kicker, title, body, metric, metric_label, link_text, href, dark)]
+    """
+    out = []
+    for i, (kick, title, body, metric, mlabel, ltext, href, dark) in enumerate(cards):
+        cls = "stack-card on-dark" if dark else "stack-card"
+        metric_html = ""
+        if metric:
+            metric_html = (f'<div class="stack-metric">{esc(metric)}'
+                           f'<small>{esc(mlabel)}</small></div>')
+        link_html = ""
+        if href:
+            btn = "btn primary on-dark" if dark else "btn primary"
+            link_html = (f'<a class="{btn}" href="{esc(href)}">{esc(ltext)} '
+                         f'<span class="arr">&rarr;</span></a>')
+        out.append(f"""<div class="{cls}" style="z-index:{i + 1}">
+  <div>
+    <div class="stack-head"><span class="stack-num">{esc(kick)}</span>
+      <span class="stack-num">{i + 1:02d} / {len(cards):02d}</span></div>
+    <h3>{esc(title)}</h3>
+    <p>{esc(body)}</p>
+  </div>
+  <div class="stack-foot">{metric_html}{link_html}</div>
+</div>""")
+    return '<div class="stack">' + "".join(out) + "</div>"
+
+
 def rail(items):
     """items = [(kicker, title, desc, href)]"""
     out = []
@@ -522,15 +551,12 @@ def division_of(p):
 def r_homepage(p, ix):
     c = CORPORATE["/"]
     by_path, children, sectors_of, services_of = ix
-    div_cards = ""
-    for d in DIVS:
-        pr = d["proof"]
-        div_cards += f"""<a class="card rv" href="/{d['root']}/">
-          <span class="num">{esc(d['unit'])}</span>
-          <h3>{esc(d['label'])}</h3>
-          <p>{esc(d['nav_blurb'])}</p>
-          <ul class="ticks"><li>{esc(pr['stat'])} {esc(pr['stat_label'])}, {esc(pr['client'])}</li></ul>
-        </a>"""
+    div_stack = stack([
+        (d["unit"], d["thesis"], d["lede"],
+         d["proof"]["stat"], f"{d['proof']['stat_label']}, {d['proof']['client']}",
+         f"{d['label']} practice", f"/{d['root']}/", i % 2 == 1)
+        for i, d in enumerate(DIVS)
+    ])
     cap_items = [(c2["name"], f"/capabilities/{c2['slug']}/") for c2 in CAPABILITIES]
     sol_items = [(s[1], f"/growth-solutions/{s[0]}/") for s in SHARED_SOLUTIONS]
 
@@ -545,7 +571,7 @@ def r_homepage(p, ix):
   {sec_head("Divisions", "Four practices, four different definitions of a good month.",
             "A booked appointment, a booked job, a signed matter and a blended efficiency ratio. "
             "The channels overlap. Almost nothing else does.")}
-  <div class="grid g4">{div_cards}</div>
+  {div_stack}
 </section>
 
 <section class="sec bone-full"><div class="sec-inner">
@@ -919,6 +945,22 @@ def r_division_hub(p, ix):
           <div>{ticks(mod['deliverables'][:4])}</div>
         </div>"""
 
+    # The four beats that decide whether this practice is a fit, as stacking cards.
+    model_stack = stack([
+        ("What it is measured on", d["unit"].capitalize(),
+         d["thesis"], d["proof"]["stat"],
+         f"{d['proof']['stat_label']}, {d['proof']['client']}",
+         "See the numbers", f"/{d['root']}/case-studies/", False),
+        ("Where the money leaks", "Fix intake before raising budget.",
+         d["judgment"], None, None, "Growth assessment",
+         f"/{d['root']}/growth-assessment/", True),
+        ("The constraint", "What the category will let you say.",
+         d["regulatory"], None, None, None, None, False),
+        ("When to walk away", "The cases where we say no.",
+         d["not_for"], None, None, "Talk to the practice lead",
+         f"/{d['root']}/lead-strategist/", True),
+    ])
+
     sector_items = [(s, f"/{d['industries_root']}/{slugify(s)}/") for s in sectors]
     title = mk_title(f"{d['label']} Marketing Agency")
     desc = f"{d['label']} marketing agency. {d['lede']}"
@@ -932,14 +974,19 @@ def r_division_hub(p, ix):
 <section class="sec thesis dark-full"><div class="sec-inner"><p class="rv">{esc(d['thesis'])}</p></div></section>
 
 <section class="sec">
-  {sec_head("The problem", "What usually brings a business here.",
-            esc(d['judgment']))}
+  {sec_head("How this practice works", "Four things worth knowing before you brief anyone.",
+            "Including the parts that cost us revenue to say out loud.")}
+  {model_stack}
+</section>
+
+<section class="sec bone-full"><div class="sec-inner">
+  {sec_head("The problem", "What usually brings a business here.", "")}
   <div class="grid g2">
     <div class="card rv"><h3>Signals we hear on the first call</h3>{ticks(d['signals'])}</div>
-    <div class="card rv" style="--d:60ms"><h3>When this is not the right purchase</h3>
-      <p>{esc(d['not_for'])}</p></div>
+    <div class="card rv" style="--d:60ms"><h3>Who decides</h3>
+      <p>Programs here are bought by {esc(d['buyer'])}.</p>{ticks(d['units'])}</div>
   </div>
-</section>
+</div></section>
 
 <section class="sec bone-full"><div class="sec-inner">
   {sec_head("Services", f"Ten services, all measured on {d['unit']}.",
@@ -966,16 +1013,6 @@ def r_division_hub(p, ix):
   {sec_head("Solutions", "Start from the outcome.", "")}
   {chips([(v['name'], f"/{d['root']}/solutions/{k}/") for k, v in sols])}
 </div></section>
-
-<section class="sec">
-  {sec_head("Rules of the category", "What constrains the work here.", "")}
-  <div class="grid g2">
-    <div class="card rv"><h3>Regulatory reality</h3><p>{esc(d['regulatory'])}</p></div>
-    <div class="card rv" style="--d:60ms"><h3>Who decides</h3>
-      <p>Programs here are bought by {esc(d['buyer'])}, and judged on {esc(d['unit'])}.</p>
-      {ticks(d['units'])}</div>
-  </div>
-</section>
 
 {rail_section(d)}
 {cta(f"Book a {d['low']} strategy call.", f"Thirty minutes with the {d['low']} lead strategist and a straight answer on what to change first.", accent="strategy call", secondary=("Take the growth assessment", f"/{d['root']}/growth-assessment/"))}
