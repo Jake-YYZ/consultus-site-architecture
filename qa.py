@@ -9,6 +9,7 @@ canonical and robots tags correct, no duplicate titles or descriptions.
 """
 
 import csv
+import json
 import os
 import re
 import sys
@@ -50,15 +51,31 @@ for dirpath, _dirnames, filenames in os.walk(DIST):
 print(f"Generated pages:            {len(built)}")
 
 # ---------------------------------------------------------------- 1. coverage
+# A partial build (--phase, or the default indexable set) is legitimate, so check
+# against what the build said it would write, falling back to the full CSV.
 arch_paths = {r["Path"] for r in arch}
-missing = arch_paths - set(built)
-extra = set(built) - arch_paths
+manifest_path = os.path.join(DIST, ".build-manifest.json")
+scope = "all"
+if os.path.exists(manifest_path):
+    with open(manifest_path, encoding="utf-8") as fh:
+        manifest = json.load(fh)
+    expected = set(manifest["paths"])
+    scope = manifest.get("scope", "all")
+else:
+    expected = arch_paths
+
+missing = expected - set(built)
+extra = set(built) - expected
+not_in_arch = set(built) - arch_paths
 if missing:
-    fail(f"{len(missing)} architecture URLs have no page. e.g. {sorted(missing)[:3]}")
+    fail(f"{len(missing)} expected URLs have no page. e.g. {sorted(missing)[:3]}")
 if extra:
-    fail(f"{len(extra)} generated pages are not in the architecture. e.g. {sorted(extra)[:3]}")
-if not missing and not extra:
-    print("PASS  every architecture URL has exactly one page")
+    fail(f"{len(extra)} generated pages were not in the build manifest. e.g. {sorted(extra)[:3]}")
+if not_in_arch:
+    fail(f"{len(not_in_arch)} generated pages are not in the architecture. e.g. {sorted(not_in_arch)[:3]}")
+if not (missing or extra or not_in_arch):
+    print(f"PASS  every expected URL has exactly one page (scope: {scope}, "
+          f"{len(expected)} of {len(arch_paths)} architecture URLs)")
 
 # ---------------------------------------------------------------- 2. parse pages
 TITLE = re.compile(r"<title>(.*?)</title>", re.S)
@@ -123,12 +140,19 @@ if not (bad_canon or bad_robots or no_h1 or multi_h1):
     print("PASS  canonical, robots and single-h1 correct on every page")
 
 # ---------------------------------------------------------------- 3. internal links
-broken = {t: s for t, s in link_targets.items() if t not in built}
+# On a partial build, links into pages this scope did not write are expected.
+# Links to a URL that is not in the architecture at all are always a failure.
+unresolved = {t for t in link_targets if t not in built}
+broken = {t for t in unresolved if t not in arch_paths}
+deferred = unresolved - broken
 if broken:
-    fail(f"{len(broken)} internal link targets do not exist. "
+    fail(f"{len(broken)} internal links point at URLs not in the architecture. "
          f"e.g. {sorted(broken)[:5]}")
 else:
-    print(f"PASS  all {len(link_targets)} distinct internal link targets resolve")
+    print(f"PASS  all {len(link_targets)} distinct internal link targets are real architecture URLs")
+if deferred:
+    warn(f"{len(deferred)} links point at architecture URLs not built in this scope "
+         f"(expected for a partial build)")
 
 # orphan check: pages nobody links to
 linked = set(link_targets)

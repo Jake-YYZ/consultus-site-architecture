@@ -20,6 +20,7 @@ thin pages into the index is how a site earns a doorway-page penalty.
 import argparse
 import csv
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -1794,6 +1795,13 @@ def main():
     copy_assets()
     names, n_urls = write_sitemaps(built)
     write_robots()
+
+    # Record what this run actually built so qa.py can verify a partial build
+    # against what was asked for rather than against the whole architecture.
+    with open(os.path.join(DIST, ".build-manifest.json"), "w", encoding="utf-8") as f:
+        json.dump({"paths": sorted(p.path for p in built),
+                   "scope": "all" if args.all else (f"phase{args.phase}" if args.phase else "indexable"),
+                   "base": base}, f)
 
     print("\nPages written by type:")
     for t, n in sorted(counts.items(), key=lambda x: -x[1]):
