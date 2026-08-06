@@ -78,3 +78,9 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # 6,532 pages is a large artifact and the action's 10-minute default
+          # is not enough for Pages to unpack and publish it.
+          timeout: 1800000
+          error_count: 20
+          reporting_interval: 10000

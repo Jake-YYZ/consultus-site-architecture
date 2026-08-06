@@ -607,6 +607,8 @@ main > section.band{ background:var(--ink); }
 
 /* ---------- Icons ---------- */
 .ico{ width:22px; height:22px; flex:none; color:var(--blue); }
+/* <use> references carry no intrinsic size, so every icon class sets one. */
+svg[aria-hidden="true"]{ display:inline-block; }
 .on-dark .ico, .dark-full .ico, .band .ico, .hero.shot .ico{ color:var(--yellow); }
 .ico-box{ width:52px; height:52px; border-radius:14px; display:inline-flex;
   align-items:center; justify-content:center; background:var(--blue-pale);

@@ -103,15 +103,34 @@ _P["marketplace-marketing"] = ('<path d="M4 9.4V19.4h16V9.4"/><path d="M3 9.4 5 
                                '<path d="M9.8 19.4v-5h4.4v5"/>')
 
 
+SPRITE_URL = "/assets/icons.svg"
+
+
 def icon(name, cls=""):
-    """Inline SVG for a slug. Returns empty string for unknown names."""
-    d = _P.get(name)
-    if not d:
+    """Reference to a symbol in the shared sprite.
+
+    These marks appear ~48 times per page across the mega menu, the footer and
+    the cards. Inlining the paths cost 13.7KB per page, which is 87MB of
+    identical markup across 6,532 pages and enough to time out a Pages deploy.
+    A single external sprite is fetched and cached once instead, taking each
+    reference down to about 55 bytes. stroke="currentColor" still resolves
+    against the referencing element, so the icons keep inheriting text colour.
+    """
+    if name not in _P:
         return ""
     c = f' class="{cls}"' if cls else ""
-    return (f'<svg{c} viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-            f'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" '
-            f'aria-hidden="true" focusable="false">{d}</svg>')
+    return (f'<svg{c} aria-hidden="true" focusable="false">'
+            f'<use href="{SPRITE_URL}#i-{name}"/></svg>')
+
+
+def sprite():
+    """The whole set as one SVG file of <symbol> definitions."""
+    syms = "".join(
+        f'<symbol id="i-{n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        f'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">{d}</symbol>'
+        for n, d in sorted(_P.items()))
+    return ('<svg xmlns="http://www.w3.org/2000/svg" style="display:none">'
+            + syms + "</svg>")
 
 
 def has_icon(name):

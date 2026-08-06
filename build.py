@@ -31,7 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "src"))
 
 import chrome as C                                    # noqa: E402
-from icons import icon                                # noqa: E402
+from icons import icon, sprite                        # noqa: E402
 from content.divisions import (                       # noqa: E402
     DIVISIONS, DIVISION_ORDER, CAPABILITIES, SHARED_SOLUTIONS)
 from content.services import S as SERVICES            # noqa: E402
@@ -2164,6 +2164,8 @@ def copy_assets(base=""):
         open(fc, "w", encoding="utf-8").write(css)
     # A subdirectory-hosted build has to prefix url() inside the stylesheets too,
     # or the fonts 404 while every page looks fine.
+    with open(os.path.join(dest, "icons.svg"), "w", encoding="utf-8") as f:
+        f.write(sprite())
     if base:
         for root, _dirs, files in os.walk(dest):
             for name in files:
