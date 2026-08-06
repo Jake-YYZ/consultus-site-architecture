@@ -591,6 +591,183 @@ main > section.band{ background:var(--ink); }
 }
 
 /* ============================================================================
+   ICONS AND ROUNDED MEDIA
+   Every division, capability, solution and service carries its own mark. All
+   photography is rounded and sits on a soft shadow so it lifts off the paper.
+   ========================================================================== */
+
+:root{
+  --radius:20px;          /* photography and content blocks */
+  --radius-lg:28px;       /* hero and full-bleed feature media */
+  --radius-sm:12px;
+  --radius-card:16px;
+  --shadow-md:0 18px 44px rgba(20,20,20,.13), 0 3px 10px rgba(20,20,20,.06);
+  --shadow-lg:0 34px 80px rgba(20,20,20,.20), 0 6px 18px rgba(20,20,20,.08);
+}
+
+/* ---------- Icons ---------- */
+.ico{ width:22px; height:22px; flex:none; color:var(--blue); }
+.on-dark .ico, .dark-full .ico, .band .ico, .hero.shot .ico{ color:var(--yellow); }
+.ico-box{ width:52px; height:52px; border-radius:14px; display:inline-flex;
+  align-items:center; justify-content:center; background:var(--blue-pale);
+  border:1px solid rgba(26,64,199,.14); margin-bottom:22px; }
+.ico-box .ico{ width:25px; height:25px; }
+.on-dark .ico-box, .dark-full .ico-box{ background:rgba(255,236,0,.11); border-color:rgba(255,236,0,.22); }
+.ico-inline{ width:17px; height:17px; color:var(--blue); vertical-align:-3px; margin-right:9px; }
+/* nav mega-menu rows become icon + text */
+.mega-col a{ display:flex; align-items:flex-start; gap:12px; }
+.mega-col a .mi{ width:19px; height:19px; flex:none; margin-top:2px; color:var(--blue); opacity:.85; }
+.mega-col a:hover .mi{ opacity:1; }
+.mega-col a span{ display:block; min-width:0; }
+.nav-tag .ico{ width:13px; height:13px; margin-right:5px; vertical-align:-2px; }
+
+/* ---------- All photography: rounded, shadowed, lifted ---------- */
+.hero.shot{ border-radius:var(--radius-lg); overflow:hidden; }
+.hero-frame{ padding:10px 10px 0; }
+.hero.shot .shot-img{ border-radius:0; }
+
+.band{ border-radius:var(--radius-lg); overflow:hidden; margin:0 auto; max-width:calc(100% - 20px);
+       box-shadow:var(--shadow-lg); }
+.sec.band{ padding:0 10px; }
+
+.split-media{ border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-md); }
+.sec.split{ padding:0 10px; gap:0; }
+.split{ align-items:center; }
+.split-media{ min-height:min(64vh,560px); margin:14px 0; }
+
+.tile{ border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-md);
+       transition:transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s ease; }
+.tile:hover{ transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+.tiles{ gap:16px; }
+
+.shot-card{ border-radius:var(--radius-card); box-shadow:var(--shadow-md); border-color:transparent; }
+.shot-card .m{ border-radius:0; margin:0; }
+.shot-card:hover{ box-shadow:var(--shadow-lg); border-color:transparent; }
+
+.stack-card{ border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--shadow-lg);
+             border:none; margin-bottom:18px; }
+.stack-media{ border-radius:0; }
+
+.card{ border-radius:var(--radius-card); }
+.rail a{ border-radius:var(--radius-card); }
+.tbl-wrap{ border-radius:var(--radius-card); }
+.chip{ border-radius:100px; }
+
+/* icon-led cards */
+.card.iconed h3{ margin-top:0; }
+.shot-card .b .k{ display:flex; align-items:center; gap:8px; }
+
+@media (max-width:860px){
+  .band{ max-width:100%; border-radius:var(--radius); }
+  .sec.band, .sec.split{ padding:0 12px; }
+  .split-media{ min-height:56vw; }
+  .hero.shot{ border-radius:var(--radius); }
+}
+
+/* ============================================================================
+   CONVERSION LAYER
+   Client logo strip, proof bar, floating testimonial cards, a persistent CTA
+   rail and risk-reversal microcopy. Everything here carries a verifiable claim.
+   ========================================================================== */
+
+/* ---------- Client logo strip, directly under the hero ---------- */
+.proof-strip{ background:var(--paper); border-bottom:1px solid var(--bone-border); position:relative; z-index:1; }
+.proof-in{ max-width:var(--wrap-wide); margin:0 auto; padding:42px var(--pad) 40px; }
+.proof-note{ font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--char-2); text-align:center; margin-bottom:26px; }
+.logo-row{ list-style:none; display:flex; align-items:center; justify-content:center;
+  gap:clamp(26px,4vw,56px); flex-wrap:wrap; }
+.logo-row img{ height:28px; width:auto; opacity:.5; filter:grayscale(1);
+  transition:opacity .25s ease, filter .25s ease; }
+.logo-row li:hover img{ opacity:1; filter:grayscale(0); }
+
+/* ---------- Proof bar ---------- */
+.proof-bar{ background:var(--ink); color:var(--paper); position:relative; z-index:1; }
+.pb-in{ max-width:var(--wrap); margin:0 auto; padding:56px var(--pad);
+  display:grid; grid-template-columns:repeat(4,1fr); gap:28px; }
+.pb-item{ border-left:1px solid var(--onyx-border); padding-left:22px; }
+.pb-num{ display:block; font-size:clamp(30px,3.4vw,46px); font-weight:400; letter-spacing:-.03em;
+  line-height:1; color:var(--yellow); }
+.pb-lbl{ display:block; font-size:14.5px; margin-top:12px; }
+.pb-src{ display:block; font-size:12.5px; color:var(--paper-dim); margin-top:6px; }
+@media (max-width:860px){ .pb-in{ grid-template-columns:repeat(2,1fr); } }
+
+/* ---------- Floating testimonial cards ---------- */
+.quotes{ position:relative; overflow:hidden; }
+.quotes-in{ max-width:var(--wrap-wide); margin:0 auto; display:grid;
+  grid-template-columns:1fr minmax(280px,1.05fr) 1fr; gap:clamp(20px,3vw,44px);
+  align-items:center; }
+.quotes-in .sec-title{ text-align:center; }
+.quotes-b{ display:none; }
+.quote-card{ background:var(--pure); border-radius:22px; padding:30px 28px 26px;
+  box-shadow:var(--shadow-lg); max-width:400px; }
+.quote-card.qc-l{ transform:rotate(-2.4deg); justify-self:end; }
+.quote-card.qc-r{ transform:rotate(2.2deg); justify-self:start; }
+.qmark{ display:block; font-size:44px; line-height:.7; color:var(--blue); margin-bottom:12px; }
+.quote-card blockquote{ font-size:16.5px; line-height:1.6; color:var(--ink); margin:0 0 20px; }
+.quote-card figcaption{ display:block; }
+.qn{ display:block; font-size:14.5px; font-weight:600; }
+.qr{ display:block; font-size:13px; color:var(--charcoal); margin-top:3px; }
+.qfoot{ display:flex; align-items:center; justify-content:space-between; gap:18px;
+  margin-top:22px; padding-top:18px; border-top:1px solid var(--bone-border); }
+.qfoot img{ height:24px; width:auto; opacity:.6; filter:grayscale(1); }
+.qstat{ font-size:23px; font-weight:400; letter-spacing:-.02em; line-height:1; text-align:right; }
+.qstat small{ display:block; font-size:11px; color:var(--charcoal); margin-top:5px; letter-spacing:0; }
+@media (max-width:1000px){
+  .quotes-in{ grid-template-columns:1fr; justify-items:center; gap:32px; }
+  .quote-card{ max-width:520px; }
+  .quote-card.qc-l, .quote-card.qc-r{ transform:none; justify-self:center; }
+  .quotes-in .sec-title{ order:-1; }
+}
+
+/* ---------- Persistent CTA rail ---------- */
+.cta-rail{ position:fixed; left:50%; transform:translateX(-50%) translateY(120%);
+  bottom:18px; z-index:180; display:flex; align-items:center; gap:18px;
+  background:rgba(251,250,247,.96); backdrop-filter:blur(20px) saturate(180%);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid rgba(20,20,20,.08); border-radius:100px;
+  box-shadow:0 12px 44px rgba(20,20,20,.18); padding:10px 10px 10px 24px;
+  transition:transform .45s cubic-bezier(.22,1,.36,1); max-width:calc(100vw - 24px); }
+.cta-rail.show{ transform:translateX(-50%) translateY(0); }
+.cr-note{ font-size:13.5px; color:var(--charcoal); white-space:nowrap; }
+@media (max-width:600px){
+  .cta-rail{ padding:8px 8px 8px 16px; gap:10px; bottom:12px; }
+  .cr-note{ font-size:11.5px; white-space:normal; max-width:150px; }
+}
+@media (prefers-reduced-motion: reduce){ .cta-rail{ transition:none; } }
+
+/* ---------- Risk reversal ---------- */
+.reassure{ list-style:none; display:flex; gap:22px; flex-wrap:wrap; justify-content:center;
+  margin-top:26px; }
+.reassure li{ font-size:13.5px; color:var(--paper-dim); display:flex; align-items:center; gap:8px; }
+.reassure li::before{ content:""; width:15px; height:15px; border-radius:50%; flex:none;
+  background:var(--yellow);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 6 9 17l-5-5' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 6 9 17l-5-5' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/13px no-repeat; }
+.sec:not(.cta) .reassure li{ color:var(--charcoal); }
+.sec:not(.cta) .reassure li::before{ background:var(--blue); }
+
+/* footer and tile marks */
+.fi{ width:15px; height:15px; flex:none; opacity:.55; margin-right:9px; vertical-align:-3px; }
+.foot-cols a:hover .fi{ opacity:1; }
+.tile-ico{ width:22px; height:22px; color:var(--yellow); margin-bottom:12px; }
+.shot-card .b .k .ico{ width:15px; height:15px; }
+
+/* ---------- Centred photographic hero (About) ---------- */
+.hero.shot.centred{ align-items:center; text-align:center; }
+.hero.shot.centred .hero-in{ padding:180px var(--pad) 120px; max-width:1000px; }
+.hero.shot.centred .hero-display{ max-width:none; margin:0 auto;
+  font-size:clamp(44px,7.4vw,104px); line-height:1.0; letter-spacing:-.035em; }
+.hero.shot.centred .hero-sub{ margin:30px auto 0; max-width:56ch; }
+.hero.shot.centred h1.hero-kw{ justify-content:center; }
+.hero.shot.centred .btn-row{ justify-content:center; margin-top:40px; }
+.hero.shot.centred .hero-crumbs .crumbs ol{ justify-content:center; }
+.hero.shot.centred::after{
+  background:linear-gradient(180deg, rgba(8,8,8,.6) 0%, rgba(8,8,8,.42) 40%,
+                                     rgba(8,8,8,.5) 72%, rgba(8,8,8,.78) 100%); }
+@media (max-width:600px){ .hero.shot.centred .hero-in{ padding:132px 18px 72px; } }
+
+/* ============================================================================
    RESPONSIVE OVERRIDES — must stay last in the file.
    ========================================================================== */
 @media (max-width:860px){ .hero-frame{ position:static; } }

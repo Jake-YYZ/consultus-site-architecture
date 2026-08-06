@@ -31,6 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "src"))
 
 import chrome as C                                    # noqa: E402
+from icons import icon                                # noqa: E402
 from content.divisions import (                       # noqa: E402
     DIVISIONS, DIVISION_ORDER, CAPABILITIES, SHARED_SOLUTIONS)
 from content.services import S as SERVICES            # noqa: E402
@@ -434,8 +435,32 @@ CAPABILITY_PHOTO = {
     "analytics-intelligence": P + "analytics-laptop.jpg",
 }
 
-OFFICE = [PH + f for f in ("office-lounge.jpg", "office-meeting.jpg", "team-studio.jpg",
-                           "office-pingpong.jpg", "team-group.jpg", "office-wall.jpg")]
+# Jake's pick for heroes, so it leads the rotation.
+OFFICE = [PH + f for f in ("office-pingpong.jpg", "office-lounge.jpg", "team-studio.jpg",
+                           "office-meeting.jpg", "team-group.jpg", "office-wall.jpg")]
+HERO_DEFAULT = PH + "office-pingpong.jpg"
+
+
+def _scan_division_photos():
+    """Drop real subject photography into src/assets/photos/<division>/ and it is
+    picked up automatically on the next build, replacing the generic fallbacks.
+
+    Expected folders: healthcare/ trades/ dtc/ professional-services/
+    Anything .jpg .jpeg .png or .webp is used, sorted for a stable order.
+    """
+    found = {}
+    for div, meta in DIVISIONS.items():
+        d = os.path.join(SRC_ASSETS, "photos", meta["slug"])
+        if not os.path.isdir(d):
+            continue
+        files = sorted(f for f in os.listdir(d)
+                       if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp")))
+        if files:
+            found[div] = [f"/assets/photos/{meta['slug']}/{f}" for f in files]
+    return found
+
+
+CUSTOM_PHOTOS = _scan_division_photos()
 
 
 def service_photo(slug):
@@ -443,11 +468,18 @@ def service_photo(slug):
 
 
 def division_photo(division):
+    custom = CUSTOM_PHOTOS.get(division)
+    if custom:
+        return custom[0]
     return P + DIVISION_PHOTO.get(division, "planning-office.jpg")
 
 
 def page_photo(seed, division):
-    """Deterministic pick from the division's pool, so siblings differ."""
+    """Deterministic pick so siblings differ. Uses the division's own photography
+    when it has been supplied, otherwise the generic library."""
+    custom = CUSTOM_PHOTOS.get(division)
+    if custom:
+        return pick(seed, custom)
     return P + pick(seed, DIVISION_POOL.get(division, list(SERVICE_PHOTO.values())))
 
 
@@ -456,6 +488,120 @@ def img(src, alt, *, w=900, h=600, eager=False, cls=""):
     c = f' class="{cls}"' if cls else ""
     return (f'<img{c} src="{esc(src)}" alt="{esc(alt)}" width="{w}" height="{h}" '
             f'{load} decoding="async">')
+
+
+# ---------------------------------------------------------------------------
+# Conversion furniture
+# ---------------------------------------------------------------------------
+# Every claim below is verifiable: real client logos, real client-approved
+# numbers, and a real description of the offer. No invented testimonials and no
+# star ratings, because the ratings on the current site contradict each other.
+
+LOGOS = [
+    ("la-vie.png", "La Vie Executive Health"), ("dragonscale.png", "Dragonscale Supplies"),
+    ("zayouna.png", "Zayouna Law Firm"), ("gordons.webp", "Gordon's Downsizing"),
+    ("bookseats.png", "BookSeats"), ("e11ement.webp", "e11ement"),
+    ("tonic.png", "Tonic Eye Care"), ("ecycle.webp", "eCycle Solutions"),
+    ("western-asphalt.svg", "Western Asphalt"), ("my-plumber.svg", "My Plumber"),
+    ("duliban.svg", "Duliban Insurance"), ("share-lawyers.svg", "Share Lawyers"),
+    ("obc.png", "Ontario Business Central"), ("spieth.png", "Spieth America"),
+    ("harmony.png", "Harmony Resorts"), ("healthy-back.png", "Healthy Back"),
+]
+
+
+# Real client testimonials, lifted from the case studies where each client
+# approved them. Three exist. Healthcare has none yet, which is why the
+# component renders whatever it is given rather than assuming four.
+TESTIMONIALS = [
+    {"quote": "Consultus Digital helped us scale our Meta advertising efforts with a "
+              "well-executed UGC strategy. The results spoke for themselves.",
+     "name": "Joseph DeMarinis", "role": "Founder, BookSeats.com",
+     "logo": "bookseats.png", "division": "DTC",
+     "stat": "8.10x", "stat_label": "return on ad spend"},
+    {"quote": "Amazing work team, thank you all for your efforts in getting this live.",
+     "name": "Adam Gordon", "role": "Gordon's Downsizing & Estate Services",
+     "logo": "gordons.webp", "division": "Trades",
+     "stat": "$164", "stat_label": "cost per lead"},
+    {"quote": "Consultus Digital is a team of critical thinkers that have helped us grow.",
+     "name": "Sam Gebrael", "role": "Head of Commercial Litigation, Zayouna Law",
+     "logo": "zayouna.png", "division": "Professional Services",
+     "stat": "$72.70", "stat_label": "cost per lead on Meta"},
+]
+
+
+def testimonial_cards(heading, accent=None, division=None):
+    """Tilted quote cards flanking the headline. Only real, attributed quotes."""
+    items = TESTIMONIALS
+    if division:
+        matched = [t for t in TESTIMONIALS if t["division"] == division]
+        if matched:
+            items = matched + [t for t in TESTIMONIALS if t["division"] != division]
+    items = items[:3]
+    h = esc(heading)
+    if accent:
+        h = h.replace(esc(accent), f'<span class="sem">{esc(accent)}</span>', 1)
+
+    def card(t, cls):
+        return f"""<figure class="quote-card {cls} rv">
+  <span class="qmark" aria-hidden="true">&ldquo;</span>
+  <blockquote>{esc(t['quote'])}</blockquote>
+  <figcaption><span class="qn">{esc(t['name'])}</span>
+    <span class="qr">{esc(t['role'])}</span></figcaption>
+  <span class="qfoot">
+    <img src="/assets/logos/{t['logo']}" alt="{esc(t['role'])}" height="26" loading="lazy" decoding="async">
+    <span class="qstat">{esc(t['stat'])}<small>{esc(t['stat_label'])}</small></span>
+  </span>
+</figure>"""
+
+    left = card(items[0], "qc-l")
+    right = card(items[1], "qc-r") if len(items) > 1 else ""
+    below = card(items[2], "qc-b") if len(items) > 2 else ""
+    return f"""<section class="sec quotes">
+  <div class="quotes-in">
+    {left}
+    <h2 class="sec-title rv">{h}</h2>
+    {right}
+  </div>
+  <div class="quotes-b">{below}</div>
+</section>"""
+
+
+def logo_strip(note="Programs we run today"):
+    """Client logos directly under the hero. These are real Consultus Digital
+    clients, which is why the strip names them rather than showing silhouettes."""
+    marks = "".join(
+        f'<li><img src="/assets/logos/{f}" alt="{esc(n)}" height="30" loading="lazy" decoding="async"></li>'
+        for f, n in LOGOS)
+    return f"""<section class="proof-strip">
+  <div class="proof-in">
+    <p class="proof-note">{esc(note)}</p>
+    <ul class="logo-row">{marks}</ul>
+  </div>
+</section>"""
+
+
+def proof_bar(stats):
+    """Numbers bar. stats = [(number, label, client)] and every one is client-approved."""
+    items = "".join(
+        f'<div class="pb-item"><span class="pb-num">{esc(n)}</span>'
+        f'<span class="pb-lbl">{esc(l)}</span><span class="pb-src">{esc(c)}</span></div>'
+        for n, l, c in stats)
+    return f'<section class="proof-bar"><div class="pb-in">{items}</div></section>'
+
+
+def sticky_cta(label, href="/book-a-strategy-call/",
+               note="Free. No obligation. You keep the findings."):
+    """Persistent conversion rail that appears once the hero is behind you."""
+    return f"""<div class="cta-rail" id="ctaRail" hidden>
+  <span class="cr-note">{esc(note)}</span>
+  <a class="btn primary sm" href="{esc(href)}">{esc(label)} <span class="arr">&rarr;</span></a>
+</div>"""
+
+
+def reassure(items):
+    """Risk-reversal microcopy under a call to action."""
+    return ('<ul class="reassure">'
+            + "".join(f"<li>{esc(i)}</li>" for i in items) + "</ul>")
 
 
 def band(label, heading, body, photo, alt, *, accent=None, buttons=()):
@@ -496,25 +642,30 @@ def split(label, heading, body, photo, alt, *, flip=False, extra="", accent=None
 
 
 def tiles(items, *, cols=4):
-    """Square photographic tiles. items = [(kicker, title, desc, href, photo, alt)]"""
+    """Square photographic tiles.
+    items = [(kicker, title, desc, href, photo, alt, icon_slug)]"""
     out = []
-    for k, t, d, href, photo, alt in items:
+    for k, t, d, href, photo, alt, ic in items:
         desc = f'<span class="d">{esc(d)}</span>' if d else ""
+        mark = icon(ic, "ico tile-ico") if ic else ""
         out.append(f"""<a class="tile" href="{esc(href)}">
   {img(photo, alt, w=900, h=900)}
-  <span class="tile-cap"><span class="k">{esc(k)}</span><span class="t">{esc(t)}</span>{desc}</span>
+  <span class="tile-cap">{mark}<span class="k">{esc(k)}</span>
+    <span class="t">{esc(t)}</span>{desc}</span>
 </a>""")
     cls = "tiles" if cols == 4 else "tiles g3"
     return f'<div class="{cls} rv">' + "".join(out) + "</div>"
 
 
 def shot_cards(items):
-    """Photo-topped cards. items = [(kicker, title, desc, href, photo, alt)]"""
+    """Photo-topped cards.
+    items = [(kicker, title, desc, href, photo, alt, icon_slug)]"""
     out = []
-    for i, (k, t, d, href, photo, alt) in enumerate(items):
+    for i, (k, t, d, href, photo, alt, ic) in enumerate(items):
+        mark = icon(ic, "ico") if ic else ""
         out.append(f"""<a class="shot-card rv" style="--d:{min(i,6)*40}ms" href="{esc(href)}">
   <span class="m">{img(photo, alt)}</span>
-  <span class="b"><span class="k">{esc(k)}</span><h3>{esc(t)}</h3><p>{esc(d)}</p></span>
+  <span class="b"><span class="k">{mark}{esc(k)}</span><h3>{esc(t)}</h3><p>{esc(d)}</p></span>
 </a>""")
     return '<div class="grid g3">' + "".join(out) + "</div>"
 
@@ -566,7 +717,7 @@ def prose(paras):
 
 
 def hero(kw_h1, display, accent, sub, facts=(), *, dark=False, trail=None, buttons=True,
-         photo=None, alt=""):
+         photo=None, alt="", centred=False, cta_only=None):
     disp = esc(display)
     if accent:
         disp = disp.replace(esc(accent), f'<span class="sem">{esc(accent)}</span>', 1)
@@ -589,6 +740,23 @@ def hero(kw_h1, display, accent, sub, facts=(), *, dark=False, trail=None, butto
     if photo:
         # Full-bleed photograph with the copy sitting over a scrim.
         shot = img(photo, alt, w=1600, h=900, eager=True, cls="shot-img")
+        if cta_only:
+            btns = ('<div class="btn-row rv" style="--d:280ms">'
+                    f'<a class="btn primary on-dark" href="{esc(cta_only[1])}">{esc(cta_only[0])} '
+                    '<span class="arr">&rarr;</span></a></div>')
+        if centred:
+            return f"""<div class="hero-frame">
+<section class="hero shot centred">
+  {shot}
+  <div class="hero-in">
+    {crumb_html}
+    <h1 class="hero-kw rv">{esc(kw_h1)}</h1>
+    <p class="hero-display{size_cls} rv" style="--d:60ms">{disp}</p>
+    <p class="hero-sub rv" style="--d:140ms">{esc(sub)}</p>
+    {btns}
+  </div>
+</section>
+</div>"""
         btns = btns.replace('class="btn primary"', 'class="btn primary on-dark"') \
                    .replace('class="btn secondary"', 'class="btn secondary on-dark"')
         return f"""<div class="hero-frame">
@@ -618,11 +786,11 @@ def hero(kw_h1, display, accent, sub, facts=(), *, dark=False, trail=None, butto
 </div>"""
 
 
-def page_shell(title, desc, path, body, *, noindex=False, jsonld=None, tag=None):
+def page_shell(title, desc, path, body, *, noindex=False, jsonld=None, tag=None, tag_slug=None):
     return (C.head(title, desc, path, noindex=noindex, jsonld=jsonld)
-            + C.nav(DIVS, CAPABILITIES, SHARED_SOLUTIONS, tag=tag)
+            + C.nav(DIVS, CAPABILITIES, SHARED_SOLUTIONS, tag=tag, tag_slug=tag_slug, icons=icon)
             + f'<main id="main">{body}</main>'
-            + C.footer(DIVS, CAPABILITIES, SHARED_SOLUTIONS))
+            + C.footer(DIVS, CAPABILITIES, SHARED_SOLUTIONS, icons=icon))
 
 
 # ---------------------------------------------------------------------------
@@ -730,12 +898,12 @@ def r_homepage(p, ix):
     ])
     cap_tiles = tiles([
         ("Capability", c2["name"], c2["blurb"], f"/capabilities/{c2['slug']}/",
-         CAPABILITY_PHOTO.get(c2["slug"], P + "planning-office.jpg"), c2["name"])
+         CAPABILITY_PHOTO.get(c2["slug"], P + "planning-office.jpg"), c2["name"], c2["slug"])
         for c2 in CAPABILITIES[:4]
     ])
     cap_tiles_2 = tiles([
         ("Capability", c2["name"], c2["blurb"], f"/capabilities/{c2['slug']}/",
-         CAPABILITY_PHOTO.get(c2["slug"], P + "planning-office.jpg"), c2["name"])
+         CAPABILITY_PHOTO.get(c2["slug"], P + "planning-office.jpg"), c2["name"], c2["slug"])
         for c2 in CAPABILITIES[4:]
     ], cols=3)
     cap_items = [(c2["name"], f"/capabilities/{c2['slug']}/") for c2 in CAPABILITIES]
@@ -743,7 +911,9 @@ def r_homepage(p, ix):
 
     body = f"""
 {hero(c['kw'], c['display'], c['accent'], c['sub'], c['facts'],
-      photo=PH + 'office-lounge.jpg', alt='The Consultus Digital studio in Toronto')}
+      photo=HERO_DEFAULT, alt='The Consultus Digital studio in Toronto')}
+
+{logo_strip("Programs we run today")}
 
 <section class="sec thesis dark-full"><div class="sec-inner">
   <p class="rv">{esc(c['thesis'])}</p>
@@ -764,6 +934,8 @@ def r_homepage(p, ix):
 {cap_tiles}
 {cap_tiles_2}
 </section>
+
+{testimonial_cards("What clients say once the numbers land.", accent="once the numbers land.")}
 
 <section class="sec dark-full"><div class="sec-inner">
   {sec_head("Proof", "Numbers our clients approved for publication.",
@@ -953,9 +1125,13 @@ def r_about(p, ix):
         f'<h3>{esc(t)}</h3><p>{esc(b)}</p></div>'
         for i, (t, b) in enumerate(c["principles"]))
     body = f"""
-{hero(c['kw'], c['display'], c['accent'], c['sub'], trail=trail,
-      photo=pick(p.path, OFFICE), alt='Consultus Digital in Toronto')}
-<section class="sec"><div class="prose rv" style="max-width:70ch">
+{hero(c['kw'], "Upgrade your marketing agency.", "Upgrade", c['sub'], trail=trail,
+      photo=PH + 'team-group.jpg', alt='The Consultus Digital team in Toronto',
+      centred=True, cta_only=("Book a strategy call", "/book-a-strategy-call/"))}
+
+{logo_strip("The programs behind the work")}
+
+<section class="sec"><div class="prose rv" style="max-width:70ch;margin:0 auto;text-align:left">
   {''.join(f'<p>{esc(x)}</p>' for x in c['body'])}
 </div></section>
 <section class="sec bone-full"><div class="sec-inner">
@@ -1171,6 +1347,8 @@ def r_division_hub(p, ix):
       trail=trail, photo=division_photo(p.division),
       alt=f"{d['label']} marketing at Consultus Digital")}
 
+{logo_strip(f"{d['label']} programs we run today")}
+
 {band("The thesis", d['thesis'], d['lede'], P + DIVISION_POOL[p.division][4],
       f"{d['label']} clients at Consultus Digital",
       buttons=(("Book a strategy call", "/book-a-strategy-call/", "primary on-dark"),
@@ -1217,12 +1395,14 @@ def r_division_hub(p, ix):
   {chips([(v['name'], f"/{d['root']}/solutions/{k}/") for k, v in sols])}
 </div></section>
 
+{testimonial_cards("Clients, in their own words.", accent="their own words.", division=p.division)}
+
 {rail_section(d)}
 {cta(f"Book a {d['low']} strategy call.", f"Thirty minutes with the {d['low']} lead strategist and a straight answer on what to change first.", accent="strategy call", secondary=("Take the growth assessment", f"/{d['root']}/growth-assessment/"))}
 """
     jl = [C.crumb_jsonld(trail),
           C.service_jsonld(f"{d['label']} Marketing", d["lede"], p.path, area=d["label"])]
-    return page_shell(title, desc, p.path, body, jsonld=jl, tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=jl, tag=d["label"], tag_slug=d["slug"])
 
 
 def rail_section(d):
@@ -1260,7 +1440,7 @@ def r_industry_directory(p, ix):
 <section class="sec">{groups}</section>
 {cta("Cannot find yours?", "The list covers the industries we have run programs in. If yours is adjacent, the call will tell you whether the playbook transfers.", accent="Cannot find yours?", secondary=(f"{d['label']} practice", f"/{d['root']}/"))}
 """
-    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"], tag_slug=d["slug"])
 
 
 def r_division_service_hub(p, ix):
@@ -1303,7 +1483,7 @@ def r_division_service_hub(p, ix):
 </div></section>
 {cta("Which of these do you actually need?", "Usually two or three, not ten. The strategy call narrows it before anyone quotes.", accent="actually need?")}
 """
-    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"], tag_slug=d["slug"])
 
 
 def r_division_solution_hub(p, ix):
@@ -1330,7 +1510,7 @@ def r_division_solution_hub(p, ix):
 </div></section>
 {cta("Not sure which one you have?", "Describe the situation. Often the presenting problem is a symptom of a different one.", accent="which one you have?")}
 """
-    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"], tag_slug=d["slug"])
 
 
 def r_division_solution(p, ix):
@@ -1367,7 +1547,7 @@ def r_division_solution(p, ix):
 {cta(f"Is this your situation?", "If it is, the call goes straight to what we would change first. If it is not, we will say which one it actually is.", accent="your situation?")}
 """
     jl = [C.crumb_jsonld(trail), C.service_jsonld(sol["name"], sol["lede"], p.path, area=d["label"])]
-    return page_shell(title, desc, p.path, body, jsonld=jl, tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=jl, tag=d["label"], tag_slug=d["slug"])
 
 
 def r_division_case_hub(p, ix):
@@ -1393,7 +1573,7 @@ def r_division_case_hub(p, ix):
 </section>
 {cta("Want this explained on a call?", "We will walk through what produced the number and whether the same approach applies to you.", accent="explained on a call?")}
 """
-    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"], tag_slug=d["slug"])
 
 
 def r_division_insight_hub(p, ix):
@@ -1418,7 +1598,7 @@ def r_division_insight_hub(p, ix):
 {rail_section(d)}
 {cta("Rather just ask?", "A strategy call answers more than an article will, and it is specific to your account.", accent="just ask?")}
 """
-    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"], tag_slug=d["slug"])
 
 
 def r_division_strategist(p, ix):
@@ -1453,7 +1633,7 @@ def r_division_strategist(p, ix):
 </div></section>
 {cta("Talk to the strategist directly.", "Strategy calls are taken by the practice lead, not by a salesperson who hands you over afterwards.", accent="directly")}
 """
-    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"], tag_slug=d["slug"])
 
 
 def r_division_assessment(p, ix):
@@ -1499,7 +1679,7 @@ def r_division_assessment(p, ix):
 </div></section>
 {cta(f"Book the {d['low']} assessment.", "Thirty minutes with the practice lead. You keep the findings either way.", accent="Book the")}
 """
-    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=[C.crumb_jsonld(trail)], tag=d["label"], tag_slug=d["slug"])
 
 
 # ---------------------------------------------------------------------------
@@ -1571,7 +1751,7 @@ def r_sector_hub(p, ix):
 """
     jl = [C.crumb_jsonld(trail), C.faq_jsonld([(q, re.sub("<[^>]+>", "", a)) for q, a in faq]),
           C.service_jsonld(f"{sname} Marketing", prof["lede"], p.path, area=sname)]
-    return page_shell(title, desc, p.path, body, jsonld=jl, tag=d["label"])
+    return page_shell(title, desc, p.path, body, jsonld=jl, tag=d["label"], tag_slug=d["slug"])
 
 
 # ---------------------------------------------------------------------------
@@ -1600,7 +1780,7 @@ def r_industry(p, ix):
         if not mod:
             continue
         svc_items.append((mod["metric"], f"{mod['name']} for {low}", mod["blurb"],
-                          sp.path, service_photo(slug), f"{mod['name']} for {low}"))
+                          sp.path, service_photo(slug), f"{mod['name']} for {low}", slug))
     svc_cards = shot_cards(svc_items)
 
     display = pick(p.path, [
@@ -1684,7 +1864,7 @@ def r_industry(p, ix):
 """
     jl = [C.crumb_jsonld(trail), C.faq_jsonld([(q, re.sub("<[^>]+>", "", a)) for q, a in faq]),
           C.service_jsonld(f"{ind} Marketing", hook, p.path, area=ind)]
-    return page_shell(title, desc, p.path, body, noindex=(p.indexation != "Index"), jsonld=jl, tag=d["label"])
+    return page_shell(title, desc, p.path, body, noindex=(p.indexation != "Index"), jsonld=jl, tag=d["label"], tag_slug=d["slug"])
 
 
 # ---------------------------------------------------------------------------
@@ -1816,7 +1996,7 @@ def r_service_industry(p, ix):
 """
     jl = [C.crumb_jsonld(trail), C.faq_jsonld([(q, re.sub("<[^>]+>", "", a)) for q, a in faq]),
           C.service_jsonld(h1, mod["blurb"], p.path, area=ind)]
-    return page_shell(title, desc, p.path, body, noindex=(p.indexation != "Index"), jsonld=jl, tag=d["label"])
+    return page_shell(title, desc, p.path, body, noindex=(p.indexation != "Index"), jsonld=jl, tag=d["label"], tag_slug=d["slug"])
 
 
 # ---------------------------------------------------------------------------

@@ -76,18 +76,34 @@ def head(title, description, path, *, noindex=False, jsonld=None, og_type="websi
 # NAV
 # --------------------------------------------------------------------------
 
-def nav(divisions, capabilities, solutions, *, tag=None):
-    div_links = "".join(
-        f'<a href="/{d["root"]}/">{esc(d["label"])}<small>{esc(d["nav_blurb"])}</small></a>'
-        for d in divisions)
-    cap_links = "".join(
-        f'<a href="/capabilities/{c["slug"]}/">{esc(c["name"])}<small>{esc(c["blurb"])}</small></a>'
-        for c in capabilities)
-    half = (len(solutions) + 1) // 2
-    def sol_col(items):
-        return "".join(f'<a href="/growth-solutions/{s[0]}/">{esc(s[1])}</a>' for s in items)
+def nav(divisions, capabilities, solutions, *, tag=None, tag_slug=None, icons=None):
+    ic = icons or (lambda name, cls="": "")
 
-    tag_html = f'<span class="nav-tag">{esc(tag)}</span>' if tag else ""
+    div_links = "".join(
+        f'<a href="/{d["root"]}/">{ic(d["slug"], "mi")}'
+        f'<span>{esc(d["label"])}<small>{esc(d["nav_blurb"])}</small></span></a>'
+        for d in divisions)
+
+    # Split the LIST into columns, never the joined HTML string. Slicing the
+    # string cut an entry in half mid-element and split its blurb across both
+    # columns, which is exactly what it looked like.
+    cap_half = (len(capabilities) + 1) // 2
+
+    def cap_col(items):
+        return "".join(
+            f'<a href="/capabilities/{c["slug"]}/">{ic(c["slug"], "mi")}'
+            f'<span>{esc(c["name"])}<small>{esc(c["blurb"])}</small></span></a>'
+            for c in items)
+
+    half = (len(solutions) + 1) // 2
+
+    def sol_col(items):
+        return "".join(
+            f'<a href="/growth-solutions/{s[0]}/">{ic(s[0], "mi")}'
+            f'<span>{esc(s[1])}</span></a>' for s in items)
+
+    tag_html = (f'<span class="nav-tag">{ic(tag_slug, "ico")}{esc(tag)}</span>'
+                if tag else "")
 
     return f"""<div class="navwrap">
 <nav class="pill" id="nav">
@@ -115,8 +131,8 @@ def nav(divisions, capabilities, solutions, *, tag=None):
         <svg class="caret" viewBox="0 0 10 6" fill="none" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.4"/></svg>
       </a>
       <div class="mega w2"><div class="mega-inner">
-        <div class="mega-col"><h5>What we do</h5>{cap_links[:len(cap_links)//2 or None]}</div>
-        <div class="mega-col"><h5>&nbsp;</h5>{cap_links[len(cap_links)//2 or None:]}</div>
+        <div class="mega-col"><h5>What we do</h5>{cap_col(capabilities[:cap_half])}</div>
+        <div class="mega-col"><h5>&nbsp;</h5>{cap_col(capabilities[cap_half:])}</div>
       </div></div>
     </li>
     <li>
@@ -186,6 +202,9 @@ def cta(heading, sub, *, accent=None, primary=("Book a strategy call", "/book-a-
       <a class="btn primary on-dark" href="{esc(primary[1])}">{esc(primary[0])} <span class="arr">&rarr;</span></a>
       <a class="btn secondary on-dark" href="{esc(secondary[1])}">{esc(secondary[0])}</a>
     </div>
+    <ul class="reassure rv" style="--d:220ms">
+      <li>Thirty minutes</li><li>No charge, no obligation</li><li>You keep the findings</li>
+    </ul>
   </div>
 </section>
 """
@@ -195,10 +214,15 @@ def cta(heading, sub, *, accent=None, primary=("Book a strategy call", "/book-a-
 # FOOTER
 # --------------------------------------------------------------------------
 
-def footer(divisions, capabilities, solutions):
-    div_li = "".join(f'<li><a href="/{d["root"]}/">{esc(d["label"])}</a></li>' for d in divisions)
-    cap_li = "".join(f'<li><a href="/capabilities/{c["slug"]}/">{esc(c["name"])}</a></li>' for c in capabilities)
-    sol_li = "".join(f'<li><a href="/growth-solutions/{s[0]}/">{esc(s[1])}</a></li>' for s in solutions)
+def footer(divisions, capabilities, solutions, icons=None):
+    ic = icons or (lambda name, cls="": "")
+    div_li = "".join(
+        f'<li><a href="/{d["root"]}/">{ic(d["slug"], "fi")}{esc(d["label"])}</a></li>' for d in divisions)
+    cap_li = "".join(
+        f'<li><a href="/capabilities/{c["slug"]}/">{ic(c["slug"], "fi")}{esc(c["name"])}</a></li>'
+        for c in capabilities)
+    sol_li = "".join(
+        f'<li><a href="/growth-solutions/{s[0]}/">{ic(s[0], "fi")}{esc(s[1])}</a></li>' for s in solutions)
     year = 2026
     return f"""<footer>
 <div class="foot-in">
@@ -234,6 +258,10 @@ def footer(divisions, capabilities, solutions):
   </div>
 </div>
 </footer>
+<div class="cta-rail" id="ctaRail">
+  <span class="cr-note">Free 30-minute strategy call. You keep the findings.</span>
+  <a class="btn primary sm" href="/book-a-strategy-call/">Book a strategy call <span class="arr">&rarr;</span></a>
+</div>
 <script>
 (function(){{
   var t=document.getElementById('navToggle'),n=document.getElementById('nav');
@@ -249,6 +277,27 @@ def footer(divisions, capabilities, solutions):
     els.forEach(function(e){{io.observe(e);}});
   }}
   requestAnimationFrame(function(){{document.body.classList.add('masks-in');}});
+  // Reveal the conversion rail once the hero is behind you, hide it again at the
+  // footer so it never covers the CTA it duplicates.
+  // The hero is position:sticky, so it never stops intersecting and cannot be
+  // used as the trigger. Scroll depth is measured instead.
+  var rail=document.getElementById('ctaRail'), footEl=document.querySelector('footer');
+  if(rail){{
+    var atFoot=false, ticking=false;
+    function sync(){{
+      var past=(window.scrollY||window.pageYOffset)>window.innerHeight*0.9;
+      rail.classList.toggle('show', past&&!atFoot);
+      ticking=false;
+    }}
+    window.addEventListener('scroll',function(){{
+      if(!ticking){{ ticking=true; requestAnimationFrame(sync); }}
+    }},{{passive:true}});
+    if(footEl&&'IntersectionObserver' in window){{
+      new IntersectionObserver(function(es){{ atFoot=es[0].isIntersecting; sync(); }},
+        {{threshold:0}}).observe(footEl);
+    }}
+    sync();
+  }}
 }})();
 </script>
 </body>
