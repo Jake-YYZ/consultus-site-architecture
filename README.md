@@ -130,8 +130,18 @@ python3 serve.py                  # preview at localhost:8099
 ## Deploying
 
 Pushing to `main` builds the site in GitHub Actions and publishes it to GitHub
-Pages. The repo stores the generator, not the 145 MB of generated HTML, so a copy
-change is a one-line diff.
+Pages. The repo stores the generator, not the generated HTML, so a copy change is
+a one-line diff.
+
+**The preview publishes the 965 indexable pages, not all 6,532.** GitHub Pages
+cannot handle the full build: the artifact uploads fine at ~210 MB across 6,532
+files, but the Pages deployment then sits in `deployment_in_progress` until the
+action gives up. It failed that way twice before I cut the scope. The 965-page
+build is 39 MB and publishes in under a minute.
+
+The full set still builds locally (`python3 build.py --all`, then double-click
+**Preview Site.command**) and is intended for the production host. Netlify, which
+is where production is going anyway, handles this scale without complaint.
 
 The preview deploy is set to `noindex` site-wide so it can never compete with
 consultusdigital.com. For the real launch, remove the "Keep the preview out of
